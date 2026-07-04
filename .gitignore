@@ -1,0 +1,62 @@
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment Variables
+.env
+
+# ==========================
+# Jupyter
+# ==========================
+.ipynb_checkpoints/
+
+# ==========================
+# Dataset
+# (Dataset is too large for GitHub)
+# ==========================
+data/*
+!data/.gitkeep
+
+# ==========================
+# Trained Models
+# ==========================
+models/*
+!models/.gitkeep
+
+# ==========================
+# Logs
+# ==========================
+*.log
+
+# ==========================
+# IDE
+# ==========================
+.vscode/
+.idea/
+*.swp
+
+# ==========================
+# Node / Frontend
+# ==========================
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
