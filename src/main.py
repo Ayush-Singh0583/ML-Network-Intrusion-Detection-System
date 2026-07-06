@@ -7,9 +7,18 @@ from evaluation import *
 
 # Load Dataset
 
-df = load_dataset(
-    "data/Friday-WorkingHours-Afternoon-DDos.pcap_ISCX.csv"
-)
+df = load_all_datasets("data")
+print("After Loading:", df.shape)
+
+df = clean_dataset(df)
+print("After Cleaning:", df.shape)
+
+df = remove_identifier_columns(df)
+print("After Removing Columns:", df.shape)
+
+X, y = split_features_target(df)
+print("X Shape:", X.shape)
+print("y Shape:", y.shape)
 
 
 # Cleaning
@@ -48,13 +57,23 @@ X_train, X_test, scaler = scale_dataset(
 
 # Train Model
 
-model = train_logistic(
-    X_train,
-    y_train
-)
+#MODEL = "decision_tree"
+# MODEL = "logistic"
+MODEL = "random_forest"
+
+if MODEL == "logistic":
+    model = train_logistic(X_train, y_train)
+
+elif MODEL == "decision_tree":
+    model = train_decision_tree(X_train, y_train)
+
+elif MODEL == "random_forest":
+    model = train_random_forest(X_train, y_train)
+
+else:
+    raise ValueError("Invalid model selected.")
 
 
-# Evaluation
 
 # Evaluate the model
 y_pred = evaluate_model(
@@ -76,3 +95,24 @@ save_model(
     scaler,
     encoder
 )
+
+print("\n========== MODEL INFORMATION ==========")
+
+if MODEL == "decision_tree":
+
+    print("Tree Depth :", model.get_depth())
+    print("Number of Leaves :", model.get_n_leaves())
+
+elif MODEL == "random_forest":
+
+    depths = [tree.get_depth() for tree in model.estimators_]
+    leaves = [tree.get_n_leaves() for tree in model.estimators_]
+
+    print("Number of Trees :", len(model.estimators_))
+    print("Average Tree Depth :", sum(depths) / len(depths))
+    print("Average Number of Leaves :", sum(leaves) / len(leaves))
+train_accuracy = model.score(X_train, y_train)
+test_accuracy = model.score(X_test, y_test)
+
+print(f"Training Accuracy : {train_accuracy:.6f}")
+print(f"Testing Accuracy  : {test_accuracy:.6f}")

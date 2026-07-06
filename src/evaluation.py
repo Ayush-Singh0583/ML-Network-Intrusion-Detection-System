@@ -35,7 +35,7 @@ def feature_importance(model, feature_names):
 
     coef = pd.DataFrame({
         "Feature": feature_names,
-        "Coefficient": model.coef_[0]
+        "Coefficient": model.feature_importances_[0]
     })
 
     # Absolute importance
