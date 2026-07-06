@@ -29,55 +29,62 @@ def evaluate_model(model, X_test, y_test):
     print(report)
 
     return y_pred
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 def feature_importance(model, feature_names):
 
-    coef = pd.DataFrame({
+    # Create DataFrame
+    importance = pd.DataFrame({
         "Feature": feature_names,
-        "Coefficient": model.feature_importances_[0]
+        "Importance": model.feature_importances_
     })
 
-    # Absolute importance
-    coef["Absolute Coefficient"] = coef["Coefficient"].abs()
-
-    # Most influential features
-    importance = coef.sort_values(
-        by="Absolute Coefficient",
+    # Sort by Importance
+    importance = importance.sort_values(
+        by="Importance",
         ascending=False
     )
 
+    # Display Top 10
     print("\n========================================")
     print("TOP 10 MOST IMPORTANT FEATURES")
     print("========================================\n")
+
     print(importance.head(10))
 
-    print("\n========================================")
-    print("TOP 10 FEATURES INDICATING DDoS")
-    print("========================================\n")
-    print(
-        coef.sort_values(
-            by="Coefficient",
-            ascending=False
-        ).head(10)
-    )
-
-    print("\n========================================")
-    print("TOP 10 FEATURES INDICATING BENIGN")
-    print("========================================\n")
-    print(
-        coef.sort_values(
-            by="Coefficient"
-        ).head(10)
-    )
-
-    # Save for report and analysis
+    # Save CSV
     importance.to_csv(
-        "models/logistic_feature_importance.csv",
+        "models/random_forest_feature_importance.csv",
         index=False
     )
 
+    # Plot Top 10 Features
+    plt.figure(figsize=(10, 6))
+
+    plt.barh(
+        importance["Feature"].head(10)[::-1],
+        importance["Importance"].head(10)[::-1]
+    )
+
+    plt.xlabel("Feature Importance")
+    plt.ylabel("Features")
+    plt.title("Top 10 Most Important Features")
+
+    plt.tight_layout()
+
+    plt.savefig(
+        "models/feature_importance.png",
+        dpi=300
+    )
+
+    plt.close()
+
     print("\nFeature importance saved to:")
-    print("models/logistic_feature_importance.csv")
+    print("models/random_forest_feature_importance.csv")
+
+    print("Feature Importance Graph saved to:")
+    print("models/feature_importance.png")
 
     return importance

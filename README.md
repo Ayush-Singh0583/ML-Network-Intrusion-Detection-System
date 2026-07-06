@@ -1,119 +1,122 @@
-# 🛡️ ML Network Intrusion Detection System (NIDS)
+# 🛡️ ML Network Intrusion Detection System
 
-A Machine Learning based **Network Intrusion Detection System (NIDS)** capable of detecting and classifying multiple types of cyber attacks using the **CIC-IDS2017** dataset.
-
-The project implements a complete Machine Learning pipeline including data preprocessing, feature engineering, model training, evaluation, and model persistence. Future versions will include a FastAPI backend, React dashboard, and real-time packet monitoring.
+An end-to-end Machine Learning based Network Intrusion Detection System capable of detecting multiple cyber attacks from network traffic using the **CIC-IDS2017** dataset. The project includes a **FastAPI backend**, **React dashboard**, **Random Forest classifier**, CSV upload & prediction, interactive visualization, and downloadable prediction reports.
 
 ---
 
-# 📌 Features
+## 📌 Project Overview
+
+This project analyzes network traffic and classifies each network flow into one of multiple attack categories or as normal (BENIGN).
+
+The application consists of:
+
+- **Machine Learning Pipeline**
+- **FastAPI REST Backend**
+- **React Frontend Dashboard**
+- **CSV Upload & Prediction**
+- **Interactive Charts**
+- **Prediction Report Download**
+
+---
+
+# 🚀 Features
+
+### Machine Learning
 
 - Multi-class Intrusion Detection
-- Automatic loading of multiple datasets
-- Data cleaning and preprocessing pipeline
-- Feature scaling and label encoding
-- Multiple Machine Learning models
-- Model evaluation and comparison
-- Feature importance analysis
-- Model serialization for deployment
+- Random Forest Classifier
+- Logistic Regression (Implemented)
+- Decision Tree (Implemented)
+- Data Cleaning & Preprocessing
+- Feature Scaling
+- Label Encoding
+- Feature Importance Analysis
+- Model Evaluation
 
 ---
 
-# 🚀 Current Capabilities
+### Backend (FastAPI)
 
-✔ Automatic loading of all CIC-IDS2017 CSV files
-
-✔ Automatic dataset merging
-
-✔ Data cleaning
-
-- Remove invalid Flow Duration
-- Handle missing values
-- Replace Infinity values
-- Remove duplicate records
-
-✔ Multi-class classification
-
-✔ Logistic Regression
-
-✔ Decision Tree
-
-✔ Random Forest
-
-✔ Model comparison
-
-✔ Save trained model
+- Predict single network flow
+- Upload CSV for bulk prediction
+- Download prediction report
+- Interactive Swagger Documentation
+- REST API
 
 ---
 
-# 📂 Dataset
+### Frontend (React)
 
-Dataset Used:
+- Modern Dashboard
+- Upload CSV Files
+- Prediction Summary
+- Attack Distribution Pie Chart
+- Attack Count Bar Chart
+- Model Information
+- Download Prediction Report
+- Responsive Dark UI
 
-**CIC-IDS2017 (Canadian Institute for Cybersecurity Intrusion Detection Dataset)**
+---
 
-The project automatically loads every CSV present inside the `data/` folder.
+# 🧠 Attack Classes
 
-Supported attack classes include:
+The model predicts:
 
 - BENIGN
 - Bot
 - DDoS
-- PortScan
 - DoS Hulk
 - DoS GoldenEye
 - DoS Slowloris
-- DoS SlowHTTPTest
+- DoS Slowhttptest
 - FTP-Patator
 - SSH-Patator
-- Heartbleed
+- PortScan
 - Infiltration
-- Web Attack - Brute Force
-- Web Attack - SQL Injection
-- Web Attack - XSS
-
-Current Dataset Statistics
-
-- **Rows:** 2,522,255
-- **Features:** 78
-- **Classes:** 15
+- WebAttack - Brute Force
+- WebAttack - SQL Injection
+- WebAttack - XSS
+- Heartbleed
 
 ---
 
-# 🧠 Machine Learning Models
+# 📊 Dataset
 
-The project currently implements
+Dataset Used:
 
-- Logistic Regression
-- Decision Tree
-- Random Forest
+**CIC IDS 2017**
 
-Future versions will also compare
+The dataset is **not included** in this repository because of its large size.
 
-- XGBoost
-- LightGBM
-- Support Vector Machine
+Download:
 
----
+https://www.unb.ca/cic/datasets/ids-2017.html
 
-# 📊 Current Performance
+Place all CSV files inside:
 
-Random Forest
-
-| Metric | Value |
-|---------|-------|
-| Accuracy | **99.83%** |
-| Classes | 15 |
-| Dataset Size | 2.5 Million Flows |
-
-> Note: Accuracy alone is not sufficient due to severe class imbalance. Precision, Recall, and F1-score are also evaluated for every attack category.
+```text
+data/
+```
 
 ---
 
-# 🏗 Project Structure
+# 📁 Project Structure
 
 ```text
 ML-Network-Intrusion-Detection-System
+│
+├── backend/
+│   ├── routers/
+│   ├── services/
+│   ├── app.py
+│   ├── config.py
+│   └── schemas.py
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── ...
 │
 ├── data/
 │
@@ -126,50 +129,95 @@ ML-Network-Intrusion-Detection-System
 │   ├── training.py
 │   ├── evaluation.py
 │   ├── prediction.py
+│   ├── generate_sample.py
 │   └── main.py
 │
-├── frontend/
-│
 ├── requirements.txt
-│
 ├── README.md
-│
 └── .gitignore
 ```
 
 ---
 
-# ⚙️ Installation
+# ⚙️ Tech Stack
 
-Clone the repository
+### Programming Language
+
+- Python
+- JavaScript
+
+### Machine Learning
+
+- Scikit-Learn
+- Pandas
+- NumPy
+- Joblib
+
+### Backend
+
+- FastAPI
+- Uvicorn
+
+### Frontend
+
+- React
+- Axios
+- Chart.js
+
+### Visualization
+
+- Matplotlib
+- Chart.js
+
+---
+
+# 📈 Model Performance
+
+| Model | Accuracy |
+|---------|----------|
+| Logistic Regression | ~98% |
+| Decision Tree | Implemented |
+| Random Forest | **99.82%** |
+
+Current Production Model:
+
+✅ Random Forest
+
+---
+
+# 🛠 Installation
+
+## Clone Repository
 
 ```bash
-git clone https://github.com/Ayush-Singh0583/ML-Network-Intrusion-Detection-System.git
+git clone https://github.com/YourUsername/ML-Network-Intrusion-Detection-System.git
 
 cd ML-Network-Intrusion-Detection-System
 ```
 
-Create Virtual Environment
+---
 
-```bash
-python -m venv .venv
-```
-
-Activate
+## Create Virtual Environment
 
 Windows
 
 ```bash
+python -m venv .venv
+
 .venv\Scripts\activate
 ```
 
 Linux / macOS
 
 ```bash
+python3 -m venv .venv
+
 source .venv/bin/activate
 ```
 
-Install dependencies
+---
+
+## Install Python Requirements
 
 ```bash
 pip install -r requirements.txt
@@ -177,13 +225,17 @@ pip install -r requirements.txt
 
 ---
 
-# ▶️ Running the Project
+## Install Frontend
 
-Place the CIC-IDS2017 CSV files inside
+```bash
+cd frontend
 
-```text
-data/
+npm install
 ```
+
+---
+
+# 🧠 Train the Model
 
 Run
 
@@ -191,123 +243,144 @@ Run
 python src/main.py
 ```
 
----
-
-# 🔄 Machine Learning Pipeline
+This generates
 
 ```text
-Load CIC-IDS2017 CSV Files
-            │
-            ▼
-Merge Datasets
-            │
-            ▼
-Data Cleaning
-            │
-            ▼
-Feature Engineering
-            │
-            ▼
-Label Encoding
-            │
-            ▼
-Train/Test Split
-            │
-            ▼
-Feature Scaling
-            │
-            ▼
-Model Training
-            │
-            ▼
-Model Evaluation
-            │
-            ▼
-Save Trained Model
+models/
+
+random_forest_model.pkl
+
+scaler.pkl
+
+label_encoder.pkl
+
+feature_names.pkl
 ```
 
 ---
 
-# 📈 Results
+# 🚀 Run Backend
 
-The system evaluates each model using
+```bash
+uvicorn backend.app:app --reload
+```
 
-- Accuracy
-- Precision
-- Recall
-- F1 Score
-- Confusion Matrix
+Backend
 
-Feature importance is also exported for further analysis.
+```
+http://127.0.0.1:8000
+```
 
----
+Swagger
 
-# 🚧 Roadmap
-
-## Version 2.0 ✅
-
-- [x] Multi-class classification
-- [x] Automatic dataset loading
-- [x] Complete preprocessing pipeline
-- [x] Logistic Regression
-- [x] Decision Tree
-- [x] Random Forest
+```
+http://127.0.0.1:8000/docs
+```
 
 ---
 
-## Version 3.0
+# 🌐 Run Frontend
 
-- [ ] FastAPI REST API
-- [ ] Swagger Documentation
-- [ ] CSV Prediction Endpoint
-- [ ] Batch Prediction
+```bash
+cd frontend
 
----
+npm run dev
+```
 
-## Version 4.0
+Frontend
 
-- [ ] React Dashboard
-- [ ] Upload CSV
-- [ ] Attack Visualization
-- [ ] Prediction History
-- [ ] Interactive Charts
+```
+http://localhost:5173
+```
 
 ---
 
-## Version 5.0
+# 📡 API Endpoints
 
-- [ ] Live Packet Capture
-- [ ] Real-time Intrusion Detection
-- [ ] Network Monitoring Dashboard
-- [ ] Live Alerts
-- [ ] Docker Deployment
+## Health
+
+```
+GET /
+
+GET /health
+```
 
 ---
 
-# 🛠 Tech Stack
+## Predict Single Flow
 
-Programming
+```
+POST /predict
+```
 
-- Python
+---
 
-Machine Learning
+## Predict CSV
 
-- Scikit-learn
-- Pandas
-- NumPy
+```
+POST /predict_csv
+```
 
-Visualization
+Upload a CIC IDS CSV file and receive prediction summary.
 
-- Matplotlib
+---
 
-Version Control
+## Download Prediction
 
-- Git
-- GitHub
+```
+GET /download
+```
 
-Dataset
+Downloads the predicted CSV report.
 
-- CIC-IDS2017
+---
+
+# 📷 Screenshots
+
+## Dashboard
+
+> *(Add Screenshot Here)*
+
+---
+
+## Prediction Summary
+
+> *(Add Screenshot Here)*
+
+---
+
+## Swagger Documentation
+
+> *(Add Screenshot Here)*
+
+---
+
+# 📊 Feature Importance
+
+The project also generates:
+
+- Feature Importance CSV
+- Feature Importance Graph
+
+Saved inside
+
+```text
+models/
+```
+
+---
+
+# 🔮 Future Enhancements
+
+- Live Packet Capture using Scapy
+- Real-Time Intrusion Detection
+- Network Interface Monitoring
+- Threat Severity Dashboard
+- User Authentication
+- Docker Deployment
+- Cloud Deployment
+- SIEM Integration
+- Model Comparison Dashboard
 
 ---
 
@@ -321,16 +394,12 @@ RV Institute of Technology and Management
 
 ---
 
-# ⭐ Future Scope
+# 📜 License
 
-- Real-time Network Intrusion Detection
-- Docker Deployment
-- Cloud Deployment
-- Model Optimization
-- Deep Learning Models
-- Explainable AI (SHAP/LIME)
-- Live Packet Monitoring using Scapy/PyShark
+This project is licensed under the MIT License.
 
 ---
 
-If you find this project useful, consider giving it a ⭐ on GitHub.
+# ⭐ If you found this project useful
+
+Please consider giving it a ⭐ on GitHub.
