@@ -1,271 +1,282 @@
-# 🛡️ ML Network Intrusion Detection System
+# 🛡️ ML Network Intrusion Detection System (NIDS)
 
-An end-to-end Machine Learning based Network Intrusion Detection System capable of detecting multiple cyber attacks from network traffic using the **CIC-IDS2017** dataset. The project includes a **FastAPI backend**, **React dashboard**, **Random Forest classifier**, CSV upload & prediction, interactive visualization, and downloadable prediction reports.
+<div align="center">
 
----
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
+![React](https://img.shields.io/badge/React-Frontend-61DAFB)
+![Scikit-Learn](https://img.shields.io/badge/ML-Random%20Forest-orange)
+![Scapy](https://img.shields.io/badge/Scapy-Packet%20Capture-red)
+![SQLite](https://img.shields.io/badge/Database-SQLite-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## 📌 Project Overview
+**A Real-Time Machine Learning Powered Network Intrusion Detection System built using FastAPI, React, Scapy, and Random Forest.**
 
-This project analyzes network traffic and classifies each network flow into one of multiple attack categories or as normal (BENIGN).
-
-The application consists of:
-
-- **Machine Learning Pipeline**
-- **FastAPI REST Backend**
-- **React Frontend Dashboard**
-- **CSV Upload & Prediction**
-- **Interactive Charts**
-- **Prediction Report Download**
+</div>
 
 ---
 
-# 🚀 Features
+# 📖 Overview
 
-### Machine Learning
+This project is a **real-time Network Intrusion Detection System (NIDS)** that captures live network traffic, converts packets into bidirectional network flows, extracts features compatible with the **CICIDS2017** dataset, predicts malicious activity using a trained **Random Forest** model, stores the results in SQLite, and visualizes everything through an interactive React dashboard.
 
-- Multi-class Intrusion Detection
+Unlike traditional offline IDS implementations, this project performs **live packet capture and real-time inference**, making it suitable as a learning platform for network security, machine learning deployment, and full-stack software engineering.
+
+---
+
+# ✨ Features
+
+## 🔍 Live Packet Capture
+
+- Capture packets using **Scapy**
+- Supports TCP, UDP and IP traffic
+- Bidirectional flow creation
+- Automatic flow expiration
+
+---
+
+## 🤖 Machine Learning Detection
+
 - Random Forest Classifier
-- Logistic Regression (Implemented)
-- Decision Tree (Implemented)
-- Data Cleaning & Preprocessing
-- Feature Scaling
-- Label Encoding
-- Feature Importance Analysis
-- Model Evaluation
+- Trained on CICIDS2017 Dataset
+- Real-time prediction
+- Confidence Score
+- Benign / Attack Classification
 
 ---
 
-### Backend (FastAPI)
+## 📊 Live Dashboard
 
-- Predict single network flow
-- Upload CSV for bulk prediction
-- Download prediction report
-- Interactive Swagger Documentation
-- REST API
-
----
-
-### Frontend (React)
-
-- Modern Dashboard
-- Upload CSV Files
-- Prediction Summary
-- Attack Distribution Pie Chart
-- Attack Count Bar Chart
-- Model Information
-- Download Prediction Report
-- Responsive Dark UI
+- Live Traffic Statistics
+- Total Flows
+- Packets Captured
+- Bytes Processed
+- Threat Counter
+- Recent Flow History
+- Protocol Statistics
+- Charts & Graphs
+- CSV Download
 
 ---
 
-# 🧠 Attack Classes
+## 🗄 Database Logging
 
-The model predicts:
+Every completed flow is stored inside SQLite with
 
-- BENIGN
-- Bot
-- DDoS
-- DoS Hulk
-- DoS GoldenEye
-- DoS Slowloris
-- DoS Slowhttptest
-- FTP-Patator
-- SSH-Patator
-- PortScan
-- Infiltration
-- WebAttack - Brute Force
-- WebAttack - SQL Injection
-- WebAttack - XSS
-- Heartbleed
+- Source IP
+- Destination IP
+- Ports
+- Protocol
+- Duration
+- Packets
+- Bytes
+- Prediction
+- Confidence
 
 ---
 
-# 📊 Dataset
+## ⚙ Backend
 
-Dataset Used:
+Built using **FastAPI**
 
-**CIC IDS 2017**
+Features include
 
-The dataset is **not included** in this repository because of its large size.
-
-Download:
-
-https://www.unb.ca/cic/datasets/ids-2017.html
-
-Place all CSV files inside:
-
-```text
-data/
-```
+- REST APIs
+- Background Cleanup Worker
+- Thread-safe Flow Manager
+- Feature Extraction
+- Model Prediction Service
+- SQLite Integration
 
 ---
 
-# 📁 Project Structure
+## 🎨 Frontend
 
-```text
-ML-Network-Intrusion-Detection-System
-│
-├── backend/
-│   ├── routers/
-│   ├── services/
-│   ├── app.py
-│   ├── config.py
-│   └── schemas.py
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   ├── package.json
-│   └── ...
-│
-├── data/
-│
-├── models/
-│
-├── notebooks/
-│
-├── src/
-│   ├── preprocessing.py
-│   ├── training.py
-│   ├── evaluation.py
-│   ├── prediction.py
-│   ├── generate_sample.py
-│   └── main.py
-│
-├── requirements.txt
-├── README.md
-└── .gitignore
-```
-
----
-
-# ⚙️ Tech Stack
-
-### Programming Language
-
-- Python
-- JavaScript
-
-### Machine Learning
-
-- Scikit-Learn
-- Pandas
-- NumPy
-- Joblib
-
-### Backend
-
-- FastAPI
-- Uvicorn
-
-### Frontend
+Built using
 
 - React
 - Axios
 - Chart.js
+- CSS
 
-### Visualization
+Provides
 
-- Matplotlib
-- Chart.js
-
----
-
-# 📈 Model Performance
-
-| Model | Accuracy |
-|---------|----------|
-| Logistic Regression | ~98% |
-| Decision Tree | Implemented |
-| Random Forest | **99.82%** |
-
-Current Production Model:
-
-✅ Random Forest
+- Modern Dark UI
+- Live Statistics
+- Flow History
+- Download Reports
+- Interactive Charts
 
 ---
 
-# 🛠 Installation
+# 🏗 Project Architecture
+
+```
+                Internet Traffic
+                       │
+                       ▼
+               Scapy Packet Capture
+                       │
+                       ▼
+                Flow Manager
+                       │
+                       ▼
+             Feature Extraction
+                       │
+                       ▼
+          Random Forest Prediction
+                       │
+         ┌─────────────┴──────────────┐
+         ▼                            ▼
+   SQLite Database            Live Dashboard
+         │                            │
+         └─────────────┬──────────────┘
+                       ▼
+                 React Frontend
+```
+
+---
+
+# 📂 Project Structure
+
+```
+ML-Network-Intrusion-Detection-System
+│
+├── backend
+│   ├── live
+│   │   ├── capture.py
+│   │   ├── cleanup.py
+│   │   ├── extractor.py
+│   │   ├── flow_manager.py
+│   │   ├── models.py
+│   │   ├── statistics.py
+│   │   └── features
+│   │
+│   ├── routers
+│   ├── services
+│   ├── trained_models
+│   ├── database.py
+│   └── app.py
+│
+├── frontend
+│   ├── src
+│   │   ├── components
+│   │   ├── pages
+│   │   └── App.jsx
+│   │
+│   └── package.json
+│
+├── data
+├── models
+├── README.md
+└── requirements.txt
+```
+
+---
+
+# 🧠 Machine Learning Pipeline
+
+```
+Dataset
+    │
+    ▼
+Data Cleaning
+    │
+    ▼
+Feature Engineering
+    │
+    ▼
+Random Forest Training
+    │
+    ▼
+Model Serialization (.pkl)
+    │
+    ▼
+FastAPI Prediction Service
+    │
+    ▼
+Live Detection
+```
+
+---
+
+# 📡 Live Detection Pipeline
+
+```
+Incoming Packet
+        │
+        ▼
+Packet Capture
+        │
+        ▼
+Flow Aggregation
+        │
+        ▼
+Feature Extraction
+        │
+        ▼
+Random Forest
+        │
+        ▼
+Prediction
+        │
+        ▼
+SQLite Logging
+        │
+        ▼
+Dashboard Update
+```
+
+---
+
+# 📊 Extracted Features
+
+The system extracts network flow features including
+
+- Flow Duration
+- Packet Counts
+- Byte Counts
+- Packet Length Statistics
+- Flow Rate
+- Header Length
+- TCP Flags
+- Active Time
+- Idle Time
+- Inter Arrival Time (IAT)
+- Window Size
+- Segment Size
+- Bulk Statistics
+- Packet Ratios
+
+These features closely follow the CICIDS2017 feature set.
+
+---
+
+# 🚀 Installation
 
 ## Clone Repository
 
 ```bash
-git clone https://github.com/YourUsername/ML-Network-Intrusion-Detection-System.git
+git clone https://github.com/<YOUR_USERNAME>/ML-Network-Intrusion-Detection-System.git
 
 cd ML-Network-Intrusion-Detection-System
 ```
 
 ---
 
-## Create Virtual Environment
-
-Windows
+## Backend
 
 ```bash
 python -m venv .venv
 
 .venv\Scripts\activate
-```
 
-Linux / macOS
-
-```bash
-python3 -m venv .venv
-
-source .venv/bin/activate
-```
-
----
-
-## Install Python Requirements
-
-```bash
 pip install -r requirements.txt
-```
 
----
-
-## Install Frontend
-
-```bash
-cd frontend
-
-npm install
-```
-
----
-
-# 🧠 Train the Model
-
-Run
-
-```bash
-python src/main.py
-```
-
-This generates
-
-```text
-models/
-
-random_forest_model.pkl
-
-scaler.pkl
-
-label_encoder.pkl
-
-feature_names.pkl
-```
-
----
-
-# 🚀 Run Backend
-
-```bash
 uvicorn backend.app:app --reload
 ```
 
-Backend
+Backend runs on
 
 ```
 http://127.0.0.1:8000
@@ -279,15 +290,17 @@ http://127.0.0.1:8000/docs
 
 ---
 
-# 🌐 Run Frontend
+## Frontend
 
 ```bash
 cd frontend
 
+npm install
+
 npm run dev
 ```
 
-Frontend
+Runs on
 
 ```
 http://localhost:5173
@@ -295,92 +308,89 @@ http://localhost:5173
 
 ---
 
-# 📡 API Endpoints
+# 📈 Dashboard
 
-## Health
+The dashboard provides
 
-```
-GET /
-
-GET /health
-```
-
----
-
-## Predict Single Flow
-
-```
-POST /predict
-```
-
----
-
-## Predict CSV
-
-```
-POST /predict_csv
-```
-
-Upload a CIC IDS CSV file and receive prediction summary.
-
----
-
-## Download Prediction
-
-```
-GET /download
-```
-
-Downloads the predicted CSV report.
+- Live Statistics
+- Threat Counter
+- Total Packets
+- Total Flows
+- Total Bytes
+- Average Packets/sec
+- Recent Flow History
+- Charts
+- Download CSV
 
 ---
 
 # 📷 Screenshots
 
-## Dashboard
+> Add screenshots here
 
-> *(Add Screenshot Here)*
+Example
 
----
+```
+screenshots/
 
-## Prediction Summary
+dashboard.png
 
-> *(Add Screenshot Here)*
+capture.png
 
----
+prediction.png
 
-## Swagger Documentation
-
-> *(Add Screenshot Here)*
-
----
-
-# 📊 Feature Importance
-
-The project also generates:
-
-- Feature Importance CSV
-- Feature Importance Graph
-
-Saved inside
-
-```text
-models/
+history.png
 ```
 
 ---
 
-# 🔮 Future Enhancements
+# 📚 Dataset
 
-- Live Packet Capture using Scapy
-- Real-Time Intrusion Detection
-- Network Interface Monitoring
-- Threat Severity Dashboard
-- User Authentication
+This project uses
+
+**CICIDS2017**
+
+for model training.
+
+---
+
+# 🛠 Tech Stack
+
+### Backend
+
+- Python
+- FastAPI
+- Scapy
+- SQLite
+- Scikit-Learn
+
+### Frontend
+
+- React
+- Axios
+- Chart.js
+- CSS
+
+### Machine Learning
+
+- Random Forest
+- Pandas
+- NumPy
+
+---
+
+# 📌 Future Improvements
+
+- WebSocket Support
+- PostgreSQL
+- SQLAlchemy ORM
 - Docker Deployment
-- Cloud Deployment
+- Authentication
+- User Management
+- Multi-Model Detection
 - SIEM Integration
-- Model Comparison Dashboard
+- Email Alerts
+- Kubernetes Deployment
 
 ---
 
@@ -388,18 +398,27 @@ models/
 
 **Ayush Singh**
 
-Information Science & Engineering
+Information Science Engineering Student
 
 RV Institute of Technology and Management
 
+GitHub:
+https://github.com/<YOUR_USERNAME>
+
+LinkedIn:
+(Add your LinkedIn)
+
+Portfolio:
+(Add your Portfolio)
+
 ---
 
-# 📜 License
+# ⭐ If you like this project
+
+Please consider giving it a **Star ⭐**
+
+---
+
+# 📄 License
 
 This project is licensed under the MIT License.
-
----
-
-# ⭐ If you found this project useful
-
-Please consider giving it a ⭐ on GitHub.
