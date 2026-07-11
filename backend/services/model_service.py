@@ -40,10 +40,14 @@ def predict(features: dict):
     # Predict
     prediction = model.predict(X)
 
+    # Predict probability for confidence
+    prob = model.predict_proba(X)[0]
+    confidence = float(np.max(prob))
+
     # Decode label
     prediction = encoder.inverse_transform(prediction)
 
-    return prediction[0]
+    return prediction[0], confidence
 
 
 # ==========================================
@@ -84,6 +88,18 @@ def predict_dataframe(df):
     )
 
     df.dropna(inplace=True)
+
+    # Handle empty DataFrame gracefully
+    if len(df) == 0:
+        return {
+            "total_records": 0,
+            "summary": {}
+        }
+
+    # Ensure all training features exist in the dataframe (fill missing with 0.0)
+    for col in feature_names:
+        if col not in df.columns:
+            df[col] = 0.0
 
     # -----------------------------
     # Arrange columns exactly like training
