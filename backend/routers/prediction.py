@@ -23,7 +23,7 @@ router = APIRouter()
 @router.post("/predict")
 def predict_attack(features: Dict[str, Any]):
 
-    attack = predict(features)
+    attack, confidence = predict(features)
 
     return {
         "prediction": attack
