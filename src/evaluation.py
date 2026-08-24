@@ -1,9 +1,15 @@
 import pandas as pd
+import matplotlib.pyplot as plt
+import os
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 
+
+# ==========================================
+# MODEL EVALUATION
+# ==========================================
 
 def evaluate_model(model, X_test, y_test):
 
@@ -29,62 +35,67 @@ def evaluate_model(model, X_test, y_test):
     print(report)
 
     return y_pred
-import pandas as pd
-import matplotlib.pyplot as plt
 
 
-def feature_importance(model, feature_names):
+# ==========================================
+# FEATURE IMPORTANCE
+# ==========================================
 
-    # Create DataFrame
+def feature_importance(model, feature_names, model_name):
+
+    if not hasattr(model, "feature_importances_"):
+        print("\nThis model does not support feature importance.")
+        return None
+
     importance = pd.DataFrame({
         "Feature": feature_names,
         "Importance": model.feature_importances_
     })
 
-    # Sort by Importance
     importance = importance.sort_values(
         by="Importance",
         ascending=False
     )
 
-    # Display Top 10
     print("\n========================================")
     print("TOP 10 MOST IMPORTANT FEATURES")
     print("========================================\n")
-
     print(importance.head(10))
+
+    # Create results folder
+    os.makedirs("results", exist_ok=True)
+
+    csv_path = f"results/{model_name}_feature_importance.csv"
+    img_path = f"results/{model_name}_feature_importance.png"
 
     # Save CSV
     importance.to_csv(
-        "models/random_forest_feature_importance.csv",
+        csv_path,
         index=False
     )
 
-    # Plot Top 10 Features
+    # Plot Top 10
     plt.figure(figsize=(10, 6))
 
+    top10 = importance.head(10)
+
     plt.barh(
-        importance["Feature"].head(10)[::-1],
-        importance["Importance"].head(10)[::-1]
+        top10["Feature"][::-1],
+        top10["Importance"][::-1]
     )
 
     plt.xlabel("Feature Importance")
     plt.ylabel("Features")
-    plt.title("Top 10 Most Important Features")
+    plt.title(f"Top 10 Features - {model_name}")
 
     plt.tight_layout()
-
-    plt.savefig(
-        "models/feature_importance.png",
-        dpi=300
-    )
-
+    plt.savefig(img_path, dpi=300)
     plt.close()
 
     print("\nFeature importance saved to:")
-    print("models/random_forest_feature_importance.csv")
+    print(csv_path)
 
     print("Feature Importance Graph saved to:")
-    print("models/feature_importance.png")
+    print(img_path)
 
     return importance

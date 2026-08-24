@@ -1,9 +1,16 @@
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 
 import joblib
+import os
 
+
+# ============================
+# LOGISTIC REGRESSION
+# ============================
 
 def train_logistic(X_train, y_train):
 
@@ -13,9 +20,12 @@ def train_logistic(X_train, y_train):
     )
 
     model.fit(X_train, y_train)
-
     return model
 
+
+# ============================
+# DECISION TREE
+# ============================
 
 def train_decision_tree(X_train, y_train):
 
@@ -24,9 +34,12 @@ def train_decision_tree(X_train, y_train):
     )
 
     model.fit(X_train, y_train)
-
     return model
 
+
+# ============================
+# RANDOM FOREST
+# ============================
 
 def train_random_forest(X_train, y_train):
 
@@ -37,52 +50,97 @@ def train_random_forest(X_train, y_train):
     )
 
     model.fit(X_train, y_train)
-
     return model
 
-import joblib
-import os
+
+# ============================
+# XGBOOST
+# ============================
+
+def train_xgboost(X_train, y_train):
+
+    model = XGBClassifier(
+        n_estimators=200,
+        max_depth=8,
+        learning_rate=0.05,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42,
+        eval_metric="logloss"
+    )
+
+    model.fit(X_train, y_train)
+    return model
 
 
+# ============================
+# LIGHTGBM
+# ============================
+def train_lightgbm(X_train, y_train):
 
-def save_model(model, scaler, encoder, feature_names):
+    model = LGBMClassifier(
+        objective="multiclass",
+        num_class=15,
+
+        n_estimators=300,
+        learning_rate=0.05,
+
+        num_leaves=255,
+        max_depth=-1,
+
+        min_child_samples=20,
+        subsample=0.8,
+        colsample_bytree=0.8,
+
+        class_weight="balanced",
+
+        random_state=42,
+        force_col_wise=True,
+        verbose=-1
+    )
+
+    model.fit(X_train, y_train)
+    return model
+
+# ============================
+# SAVE MODEL
+# ============================
+
+def save_model(model,
+               scaler,
+               encoder,
+               feature_names,
+               model_name):
 
     print("\n========== SAVING FILES ==========")
 
-    print("Current Working Directory:")
-    print(os.getcwd())
+    save_dir = os.path.join("saved_models", model_name)
+    os.makedirs(save_dir, exist_ok=True)
 
-    # Save Random Forest Model
     joblib.dump(
         model,
-        "models/random_forest_model.pkl"
+        os.path.join(save_dir, f"{model_name}_model.pkl")
     )
-    print("Random Forest Model Saved")
 
-    # Save Scaler
     joblib.dump(
         scaler,
-        "models/scaler.pkl"
+        os.path.join(save_dir, "scaler.pkl")
     )
-    print("Scaler Saved")
 
-    # Save Label Encoder
     joblib.dump(
         encoder,
-        "models/label_encoder.pkl"
+        os.path.join(save_dir, "label_encoder.pkl")
     )
-    print("Label Encoder Saved")
 
-    # Save Feature Names
     joblib.dump(
         feature_names,
-        "models/feature_names.pkl"
+        os.path.join(save_dir, "feature_names.pkl")
     )
-    print("Feature Names Saved")
 
-    print("\nFiles currently inside models folder:\n")
+    print(f"{model_name} model saved successfully.\n")
 
-    for file in os.listdir("models"):
-        print(file)
+    print("Files:")
+    for file in os.listdir(save_dir):
+        print(" -", file)
 
     print("\n========== SAVE COMPLETE ==========\n")

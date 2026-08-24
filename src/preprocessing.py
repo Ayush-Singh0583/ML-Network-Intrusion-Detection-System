@@ -117,29 +117,42 @@ def clean_dataset(df):
 
     return df
 
-
 # ==========================================
 # REMOVE IDENTIFIER COLUMNS
 # ==========================================
 
+# ==========================================
+# REMOVE IDENTIFIER + CONSTANT COLUMNS
+# ==========================================
+
 def remove_identifier_columns(df):
 
+    # Remove identifier columns
     identifier_columns = [
         "Flow ID",
         "Source IP",
+        "Source Port",
         "Destination IP",
         "Timestamp"
     ]
 
-    df.drop(
-        columns=identifier_columns,
-        inplace=True,
-        errors="ignore"
-    )
+    df = df.drop(columns=identifier_columns, errors="ignore")
+
+    # Remove constant (all same value) columns
+    constant_columns = [
+        col for col in df.columns
+        if col != "Label" and df[col].nunique() == 1
+    ]
+
+    print("\n========== REMOVING CONSTANT COLUMNS ==========")
+    print(constant_columns)
+
+    df = df.drop(columns=constant_columns)
+
+    print(f"Removed {len(constant_columns)} constant columns")
+    print(f"Remaining Columns : {df.shape[1]}")
 
     return df
-
-
 # ==========================================
 # FEATURE / TARGET SPLIT
 # ==========================================
@@ -199,3 +212,56 @@ def scale_dataset(X_train, X_test):
     X_test = scaler.transform(X_test)
 
     return X_train, X_test, scaler
+
+# ==========================================
+# COMPLETE PREPROCESSING PIPELINE
+# ==========================================
+
+def prepare_data(folder_path="data", save_csv=False):
+
+    # Load
+    df = load_all_datasets(folder_path)
+    print("After Loading:", df.shape)
+
+    # Clean
+    df = clean_dataset(df)
+    print("After Cleaning:", df.shape)
+
+    # Remove identifiers + constant columns
+    df = remove_identifier_columns(df)
+    print("After Removing Columns:", df.shape)
+
+    # Optional: Save cleaned dataset
+    if save_csv:
+        os.makedirs("results", exist_ok=True)
+        df.to_csv(
+            "results/preprocessed_dataset.csv",
+            index=False
+        )
+        print("Preprocessed CSV saved to results/preprocessed_dataset.csv")
+
+    # Feature / Target
+    X, y = split_features_target(df)
+    feature_names = X.columns
+
+    print("X Shape:", X.shape)
+    print("y Shape:", y.shape)
+
+    # Encode labels
+    y, encoder = encode_labels(y)
+
+    # Split
+    X_train, X_test, y_train, y_test = split_dataset(X, y)
+
+    # Scale
+    X_train, X_test, scaler = scale_dataset(X_train, X_test)
+
+    return (
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        scaler,
+        encoder,
+        feature_names
+    )

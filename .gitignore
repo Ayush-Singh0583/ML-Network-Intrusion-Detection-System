@@ -50,32 +50,30 @@ env/
 # ==========================================
 node_modules/
 frontend/node_modules/
-
 dist/
 build/
 frontend/dist/
 
 # ==========================================
-# Logs
+# Logs & Temp
 # ==========================================
 *.log
-
-# ==========================================
-# Temporary Files
-# ==========================================
 *.tmp
 *.bak
 *.swp
 
 # ==========================================
-# Generated Files
+# Generated ML Results
 # ==========================================
-predicted_output.csv
-sample_request.json
+results/
+models/*.png
+models/*feature_importance.csv
+models/confusion_matrix.png
 
 # ==========================================
-# Trained Models (Ignore large models)
+# Trained Models
 # ==========================================
+saved_models/
 models/*.pkl
 !models/.gitkeep
 
@@ -83,6 +81,7 @@ models/*.pkl
 # Datasets
 # ==========================================
 data/*.csv
+data/*.zip
 !data/.gitkeep
 !data/README.md
 
@@ -93,22 +92,19 @@ data/*.csv
 Thumbs.db
 desktop.ini
 
-# Personal documentation
-Documentation.docx
-PROJECT_DOCUMENTATION.md
-detailed_project_report.md
-
-# Microsoft Office
-~$*.docx
 # ==========================================
-# Documentation (Optional)
+# Documentation
 # ==========================================
 Documentation.docx
 Documentation.pdf
 PROJECT_DOCUMENTATION.md
 detailed_project_report.md
+~$*.docx
 
 # ==========================================
-# Python Analysis Scripts (Temporary)
+# Temporary Analysis Scripts
 # ==========================================
 src/analyze_features.py
+
+predicted_output.csv
+sample_request.json
