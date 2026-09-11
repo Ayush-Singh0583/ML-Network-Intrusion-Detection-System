@@ -55,18 +55,42 @@ analyst, so the report is those two quantities.
 Thresholds are quantiles of the **validation** day's benign scores. Nothing from
 the test day enters them.
 
+**XGBoost** — 400 rounds, depth 8, balanced sample weights:
+
 | benign FPR budget | observed FPR | DDoS | PortScan | Bot | any attack |
 |---|---:|---:|---:|---:|---:|
-| 0.1% | 0.11% | **58.11%** | 0.08% | 0.00% | 25.79% |
-| 1.0% | 1.02% | **62.22%** | 0.11% | 0.00% | 27.63% |
-| 5.0% | 5.55% | **63.76%** | 37.76% | 0.00% | 49.02% |
+| 0.1% | 0.14% | **61.93%** | 0.23% | 0.00% | 27.57% |
+| 1.0% | 4.38% | **63.62%** | 0.62% | 0.05% | 28.53% |
+| 5.0% | 9.48% | **67.00%** | 5.41% | 9.41% | 32.73% |
 
-Produced by `python src/run.py train --model rf --protocol crossday`; the table
-is written to `runs/<sha>-<timestamp>/detection_by_class.csv`.
+Reproduce with `python src/run.py train --model xgb --protocol crossday`; the
+table is written to `runs/<sha>-<timestamp>/detection_by_class.csv`.
 
-> The numbers above come from a deliberately small Random Forest (25 trees,
-> depth 14). A full-budget model moves the percentages. It does not move the
-> shape — see Limitations.
+### Random Forest, and why it may be the better *deployed* model
+
+A Random Forest (25 trees, depth 14 — deliberately small) on the identical
+split:
+
+| benign FPR budget | observed FPR | DDoS | PortScan | any attack |
+|---|---:|---:|---:|---:|
+| 0.1% | **0.11%** | 58.11% | 0.08% | 25.79% |
+| 1.0% | **1.02%** | 62.22% | 0.11% | 27.63% |
+| 5.0% | **5.55%** | 63.76% | 37.76% | 49.02% |
+
+XGBoost ranks slightly better. **Its thresholds do not transfer.** A budget of
+1% lands at 4.38% on the test day for XGBoost and 1.02% for the Random Forest.
+Measured on benign rows, XGBoost's 99th percentile moves 23× between
+validation and test (0.00487 → 0.11339); the Random Forest's moves 0.2%
+(0.32252 → 0.32320).
+
+Boosting optimises a loss, not calibration, and `compute_sample_weight
+("balanced")` makes it worse — benign probabilities are crushed toward zero, so
+the threshold quantile sits on a near-vertical stretch of the CDF where a small
+day-to-day shift moves the alert *rate* enormously. A Random Forest probability
+is a vote fraction averaged over trees: granular and stable. **A threshold that
+misses its target by 4× is not an operating point.** Fix with isotonic
+calibration fitted on the validation day, or threshold by rank rather than by
+value.
 
 ## What the numbers say
 
@@ -87,9 +111,9 @@ flows/day at 0.1% prevalence:
 
 | FPR budget | false alerts/day | true alerts/day | precision |
 |---|---:|---:|---:|
-| 0.1% | 11,334 | 2,579 | **18.5%** |
-| 1.0% | 101,666 | 2,763 | 2.7% |
-| 5.0% | 554,318 | 4,902 | 0.9% |
+| 0.1% | 14,252 | 2,757 | **16.2%** |
+| 1.0% | 437,532 | 2,853 | 0.7% |
+| 5.0% | 946,997 | 3,273 | 0.3% |
 
 Every rate on this dataset is measured at roughly **400× the real attack
 prevalence**, which flatters precision enormously. No operating point here is
@@ -105,21 +129,27 @@ packet counts, lengths and flags. Measured on the raw capture — 158,930
 PortScan flows reduce to **1,958 unique feature vectors** once `Destination
 Port` is removed, versus 90,819 with it. Scanning is a property of a *set* of
 flows (one source touching many ports in a window), not of any one flow, so a
-per-flow classifier cannot see it. Detection is 0.08–0.11% at usable thresholds.
-The fix is a windowed per-source aggregation stage, not a better model — see
-Roadmap.
+per-flow classifier cannot see it. Detection is 0.23% at the usable threshold. The fix is a windowed per-source
+aggregation stage, not a better model — see Roadmap.
 
 **Botnet C2 detection is 0.00% at every threshold tested.** Beaconing has no
 per-flow signature either.
 
-**Model capacity is not the constraint.** XGBoost with balanced class weights
-and deeper trees reproduces the same numbers (DDoS 59.3%, PortScan 0.25%, Bot
-0.00%). The signal is not in the data.
+**Model capacity is not the constraint.** Three independent experiments agree:
+a 25-tree Random Forest, a 400-round class-balanced XGBoost, and every
+threshold between 0.1% and 5% false alarms all return near-zero on PortScan and
+Bot. A 16× larger model buys 3.8 points of DDoS and nothing else. The signal is
+not in the data.
 
 **`Destination Port` is deliberately excluded from the feature set** to prevent
 shortcut learning (port 21 → FTP-Patator). This is why scan flows become
 indistinguishable. The port belongs in the *detection logic* as an aggregate,
 never as a per-flow feature.
+
+**Thresholds calibrated on XGBoost do not transfer across days.** A 1% benign
+false-alarm budget lands at 4.38% on the test day, because the model's
+probabilities are uncalibrated (see Results). Use the Random Forest bundle, or
+calibrate, before trusting an operating point.
 
 **The open-set rejector is weak.** Mahalanobis distance on scaled features
 reaches AUROC 0.657 and TPR@5%FPR of 1.7% against known-vs-unknown ground
