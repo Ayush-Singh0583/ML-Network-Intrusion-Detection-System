@@ -1,0 +1,34 @@
+{
+  "tag": "closed_set",
+  "n_samples": 414275,
+  "labels": [
+    "BENIGN",
+    "DoS GoldenEye",
+    "DoS Hulk",
+    "DoS Slowhttptest",
+    "DoS slowloris",
+    "FTP-Patator",
+    "Heartbleed",
+    "Infiltration",
+    "SSH-Patator",
+    "WebAttack_BruteForce",
+    "WebAttack_SQLInjection",
+    "WebAttack_XSS"
+  ],
+  "metrics": {
+    "accuracy": 0.9994013638283749,
+    "macro_precision": 0.08333333333333333,
+    "macro_recall": 0.08328344698569791,
+    "macro_f1": 0.08330838269133721,
+    "weighted_precision": 1.0,
+    "weighted_recall": 0.9994013638283749,
+    "weighted_f1": 0.9997005922960466,
+    "macro_precision_present": 1.0,
+    "macro_recall_present": 0.9994013638283749,
+    "macro_f1_present": 0.9997005922960466,
+    "n_classes_true": 1.0,
+    "n_classes_union": 12.0,
+    "balanced_accuracy": NaN,
+    "mcc": NaN
+  }
+}

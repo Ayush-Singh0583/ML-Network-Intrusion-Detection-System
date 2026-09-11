@@ -78,7 +78,14 @@ def cleanup_worker():
 
                     features = extract_features(flow)
 
-                    attack, confidence = predict(features)
+                    # predict() returns a DICT, not a (label, confidence)
+                    # pair.  Unpacking it into two names raised ValueError
+                    # on every flow, and the broad `except` below swallowed
+                    # it -- so the live pipeline logged an error per flow
+                    # and silently stored nothing.
+                    result = predict(features)
+                    attack = str(result["prediction"])
+                    confidence = float(result["closed_set_confidence"])
 
                     print("\n===================================")
 

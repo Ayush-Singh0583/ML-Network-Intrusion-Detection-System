@@ -1,50 +1,23 @@
-import pandas as pd
-import numpy as np
+"""
+DEPRECATED -- validate_dataset.py
 
-# Load preprocessed CSV
-df = pd.read_csv("results/preprocessed_dataset.csv")
+Read an 865 MB CSV that main_xgb.py rewrote on every run.
 
-print("=" * 50)
-print("DATASET VALIDATION REPORT")
-print("=" * 50)
+Replacement:
+    python src/run.py cache   (then: python -m pytest tests/)
+"""
 
-# 1. Shape
-print(f"\nRows    : {df.shape[0]}")
-print(f"Columns : {df.shape[1]}")
+import sys
 
-# 2. Missing values
-missing = df.isna().sum().sum()
-print(f"\nMissing Values : {missing}")
+_MSG = """
+validate_dataset.py has been replaced.
 
-# 3. Infinite values
-numeric = df.select_dtypes(include=np.number)
-inf_count = np.isinf(numeric).sum().sum()
-print(f"Infinite Values : {inf_count}")
+  Why : superseded by the Parquet cache and the split assertions
+  Use : python src/run.py cache   (then: python -m pytest tests/)
 
-# 4. Duplicate rows
-duplicates = df.duplicated().sum()
-print(f"Duplicate Rows : {duplicates}")
+The previous implementation is preserved at
+_backup/src_pre_refactor_20260826/validate_dataset.py
+"""
 
-# 5. Label check
-print("\nLabels Found:")
-print(df["Label"].value_counts())
-
-# 6. Constant columns
-constant = [c for c in df.columns if df[c].nunique() == 1]
-print(f"\nConstant Columns ({len(constant)}):")
-print(constant)
-
-# 7. All-zero columns
-zero_cols = []
-for col in numeric.columns:
-    if (df[col] == 0).all():
-        zero_cols.append(col)
-
-print(f"\nAll Zero Columns ({len(zero_cols)}):")
-print(zero_cols)
-
-# 8. Data types
-print("\nData Types:")
-print(df.dtypes.value_counts())
-
-print("\nValidation Complete.")
+print(_MSG, file=sys.stderr)
+raise SystemExit(2)

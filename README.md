@@ -24,6 +24,112 @@ Unlike traditional offline IDS implementations, this project performs **live pac
 
 ---
 
+# 📊 Measured Results
+
+**Protocol.** Train on Monday–Wednesday plus half of Thursday, validate on the
+other half of Thursday, test on **Friday**. `DDoS`, `PortScan` and `Bot` appear
+only on Friday, so they are genuinely unseen at training time. Friday is never
+touched during training or threshold calibration.
+
+**Friday test set** — 703,198 flows:
+
+| class | count | share |
+|---|---:|---:|
+| BENIGN | 414,275 | 58.9% |
+| PortScan | 158,930 | 22.6% |
+| DDoS | 128,027 | 18.2% |
+| Bot | 1,966 | 0.3% |
+
+An all-BENIGN classifier scores **58.91%** accuracy here. That is the number any
+result must beat.
+
+## The headline metric is detection rate at a fixed false-alarm budget
+
+Not accuracy. Accuracy on this split is ambiguous — the same model scores
+**58.47%** multi-class and **69.68%** binary — and the multi-class figure is
+*below* the all-BENIGN baseline, because the model labels **zero** attack flows
+with their correct class (`DDoS`, `PortScan` and `Bot` are not in its label
+space at all). A detector's job is to catch attacks without drowning the
+analyst, so the report is those two quantities.
+
+Thresholds are quantiles of the **validation** day's benign scores. Nothing from
+the test day enters them.
+
+| benign FPR budget | observed FPR | DDoS | PortScan | Bot | any attack |
+|---|---:|---:|---:|---:|---:|
+| 0.1% | 0.11% | **58.11%** | 0.08% | 0.00% | 25.79% |
+| 1.0% | 1.02% | **62.22%** | 0.11% | 0.00% | 27.63% |
+| 5.0% | 5.55% | **63.76%** | 37.76% | 0.00% | 49.02% |
+
+Produced by `python src/run.py train --model rf --protocol crossday`; the table
+is written to `runs/<sha>-<timestamp>/detection_by_class.csv`.
+
+> The numbers above come from a deliberately small Random Forest (25 trees,
+> depth 14). A full-budget model moves the percentages. It does not move the
+> shape — see Limitations.
+
+## What the numbers say
+
+**It detects volumetric HTTP floods, and essentially nothing else.** 58–64% of
+`DDoS` — a class it has never seen — is caught, and those flows are classified
+as `DoS Hulk`. That is not a coincidence: HULK (Wednesday, in training) and
+LOIC (Friday, unseen) are both high-rate HTTP floods with near-identical flow
+geometry. The model learned the geometry rather than the label, which is real
+generalisation across attack families.
+
+**Loosening the threshold buys almost nothing.** Going from 0.1% to 5% false
+alarms raises DDoS detection by 5.6 points and multiplies false alerts by ~50.
+The tight operating point is strictly better.
+
+**Alert volume is the binding constraint, not detection rate.** CIC-IDS2017's
+test day is ~41% attack; a real link is nearer 0.1%. Projected onto 10M
+flows/day at 0.1% prevalence:
+
+| FPR budget | false alerts/day | true alerts/day | precision |
+|---|---:|---:|---:|
+| 0.1% | 11,334 | 2,579 | **18.5%** |
+| 1.0% | 101,666 | 2,763 | 2.7% |
+| 5.0% | 554,318 | 4,902 | 0.9% |
+
+Every rate on this dataset is measured at roughly **400× the real attack
+prevalence**, which flatters precision enormously. No operating point here is
+deployable as-is.
+
+---
+
+# ⚠️ Known Limitations
+
+**Port scans are not detectable from a single flow, by construction.** A port
+scan is the same flow repeated against different ports: identical duration,
+packet counts, lengths and flags. Measured on the raw capture — 158,930
+PortScan flows reduce to **1,958 unique feature vectors** once `Destination
+Port` is removed, versus 90,819 with it. Scanning is a property of a *set* of
+flows (one source touching many ports in a window), not of any one flow, so a
+per-flow classifier cannot see it. Detection is 0.08–0.11% at usable thresholds.
+The fix is a windowed per-source aggregation stage, not a better model — see
+Roadmap.
+
+**Botnet C2 detection is 0.00% at every threshold tested.** Beaconing has no
+per-flow signature either.
+
+**Model capacity is not the constraint.** XGBoost with balanced class weights
+and deeper trees reproduces the same numbers (DDoS 59.3%, PortScan 0.25%, Bot
+0.00%). The signal is not in the data.
+
+**`Destination Port` is deliberately excluded from the feature set** to prevent
+shortcut learning (port 21 → FTP-Patator). This is why scan flows become
+indistinguishable. The port belongs in the *detection logic* as an aggregate,
+never as a per-flow feature.
+
+**The open-set rejector is weak.** Mahalanobis distance on scaled features
+reaches AUROC 0.657 and TPR@5%FPR of 1.7% against known-vs-unknown ground
+truth. Its threshold also transfers poorly across days: calibrated for 5%
+rejection on Thursday, it rejects 10.1% on Friday. (The classifier's own
+threshold transfers well — 0.1% → 0.11%, 1% → 1.02% — so the drift is specific
+to the novelty score.)
+
+---
+
 # ✨ Features
 
 ## 🔍 Live Packet Capture
@@ -37,11 +143,12 @@ Unlike traditional offline IDS implementations, this project performs **live pac
 
 ## 🤖 Machine Learning Detection
 
-- Random Forest Classifier
-- Trained on CICIDS2017 Dataset
-- Real-time prediction
-- Confidence Score
-- Benign / Attack Classification
+- Random Forest / XGBoost / LightGBM classifiers over ~60 flow features
+- Trained on CIC-IDS2017 with a **temporal** train/test split (see Measured Results)
+- Real-time inference on completed flows
+- Closed-set posterior **plus** an explicit novelty score, so the API can say
+  "this resembles nothing I was trained on" rather than silently guessing
+- Known limits are documented rather than hidden — see Known Limitations
 
 ---
 
@@ -387,6 +494,7 @@ for model training.
 - Docker Deployment
 - Authentication
 - User Management
+- **Windowed per-source aggregation for scan detection** (the documented gap)
 - Multi-Model Detection
 - SIEM Integration
 - Email Alerts

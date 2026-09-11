@@ -131,14 +131,15 @@ def process_packet(packet):
         if flow.last_packet_time is not None:
 
             gap = current_time - flow.last_packet_time
+            gap_us = gap * 1_000_000.0
 
             if gap > 1:
 
-                flow.idle_times.append(gap)
+                flow.idle_times.append(gap_us)
 
             else:
 
-                flow.active_times.append(gap)
+                flow.active_times.append(gap_us)
 
         flow.last_packet_time = current_time
 

@@ -1494,3 +1494,14 @@ height:400px;
 .toast.error .toast-progress {
     background: var(--neon-red);
 }
+/* ---- ModelInfo: detection table (replaces the hardcoded accuracy tile) ---- */
+.model-warn { color: var(--neon-amber, #ffb74d); font-size: 0.85rem; margin: 0.5rem 0; }
+.model-detection { margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem; }
+.model-detection h3 { font-size: 0.9rem; margin: 0 0 0.5rem; font-weight: 600; }
+.model-detection h3 small { display: block; font-weight: 400; opacity: 0.6; font-size: 0.75rem; }
+.detect-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.detect-table td { padding: 0.3rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.detect-table td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.detect-table .low-acc { color: var(--neon-red, #ff5252); }
+.detect-total td { font-weight: 700; border-bottom: none; }
+.detect-note { font-size: 0.72rem; opacity: 0.6; margin-top: 0.5rem; line-height: 1.4; }

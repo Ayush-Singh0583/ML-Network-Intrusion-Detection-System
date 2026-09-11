@@ -1,0 +1,13 @@
+,precision,recall,f1-score,support,evaluable
+BENIGN,1.0,0.9994013638283749,0.9997005922960466,414275,True
+DoS GoldenEye,0.0,0.0,0.0,0,False
+DoS Hulk,0.0,0.0,0.0,0,False
+DoS Slowhttptest,0.0,0.0,0.0,0,False
+DoS slowloris,0.0,0.0,0.0,0,False
+FTP-Patator,0.0,0.0,0.0,0,False
+Heartbleed,0.0,0.0,0.0,0,False
+Infiltration,0.0,0.0,0.0,0,False
+SSH-Patator,0.0,0.0,0.0,0,False
+WebAttack_BruteForce,0.0,0.0,0.0,0,False
+WebAttack_SQLInjection,0.0,0.0,0.0,0,False
+WebAttack_XSS,0.0,0.0,0.0,0,False

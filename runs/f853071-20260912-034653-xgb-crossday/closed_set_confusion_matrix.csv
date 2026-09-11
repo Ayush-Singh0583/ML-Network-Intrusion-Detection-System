@@ -1,0 +1,13 @@
+,pred:BENIGN,pred:DoS GoldenEye,pred:DoS Hulk,pred:DoS Slowhttptest,pred:DoS slowloris,pred:FTP-Patator,pred:Heartbleed,pred:Infiltration,pred:SSH-Patator,pred:WebAttack_BruteForce,pred:WebAttack_SQLInjection,pred:WebAttack_XSS
+true:BENIGN,414027,13,83,54,11,58,2,6,10,2,2,7
+true:DoS GoldenEye,0,0,0,0,0,0,0,0,0,0,0,0
+true:DoS Hulk,0,0,0,0,0,0,0,0,0,0,0,0
+true:DoS Slowhttptest,0,0,0,0,0,0,0,0,0,0,0,0
+true:DoS slowloris,0,0,0,0,0,0,0,0,0,0,0,0
+true:FTP-Patator,0,0,0,0,0,0,0,0,0,0,0,0
+true:Heartbleed,0,0,0,0,0,0,0,0,0,0,0,0
+true:Infiltration,0,0,0,0,0,0,0,0,0,0,0,0
+true:SSH-Patator,0,0,0,0,0,0,0,0,0,0,0,0
+true:WebAttack_BruteForce,0,0,0,0,0,0,0,0,0,0,0,0
+true:WebAttack_SQLInjection,0,0,0,0,0,0,0,0,0,0,0,0
+true:WebAttack_XSS,0,0,0,0,0,0,0,0,0,0,0,0

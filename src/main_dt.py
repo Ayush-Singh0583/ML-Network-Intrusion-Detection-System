@@ -1,5 +1,23 @@
-from preprocessing import *
-from training import *
-from evaluation import *
+"""
+DEPRECATED -- main_dt.py
 
-# TODO: Implement this model
+Was a stub: three star-imports and '# TODO: Implement this model'.
+
+Replacement:
+    python src/run.py train --model dt --protocol closedset
+"""
+
+import sys
+
+_MSG = """
+main_dt.py has been replaced.
+
+  Why : unimplemented stub
+  Use : python src/run.py train --model dt --protocol closedset
+
+The previous implementation is preserved at
+_backup/src_pre_refactor_20260826/main_dt.py
+"""
+
+print(_MSG, file=sys.stderr)
+raise SystemExit(2)

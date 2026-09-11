@@ -1,82 +1,24 @@
-from preprocessing import *
-from training import *
+"""
+DEPRECATED -- compare_models.py
 
-import pandas as pd
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score
-)
+Crashed at line 66: sort_values(by='F1 Score') against columns named
+'Macro F1' and 'Weighted F1'.
 
-# ============================
-# LOAD & PREPROCESS DATA
-# ============================
+Replacement:
+    python src/run.py compare --protocol closedset --models rf xgb lgbm mlp cnn lstm
+"""
 
-print("\n========== PREPARING DATA ==========\n")
+import sys
 
-df = load_all_datasets("data")
-df = clean_dataset(df)
-df = remove_identifier_columns(df)
+_MSG = """
+compare_models.py has been replaced.
 
-X, y = split_features_target(df)
-y, encoder = encode_labels(y)
+  Why : KeyError on a renamed column; also used the random split
+  Use : python src/run.py compare --protocol closedset --models rf xgb lgbm mlp cnn lstm
 
-X_train, X_test, y_train, y_test = split_dataset(X, y)
-X_train, X_test, scaler = scale_dataset(X_train, X_test)
+The previous implementation is preserved at
+_backup/src_pre_refactor_20260826/compare_models.py
+"""
 
-# ============================
-# MODELS TO COMPARE
-# ============================
-
-models = {
-    "Random Forest": train_random_forest,
-    "XGBoost": train_xgboost,
-    "LightGBM": train_lightgbm
-}
-
-results = []
-
-# ============================
-# TRAIN & EVALUATE
-# ============================
-
-for name, trainer in models.items():
-
-    print(f"\nTraining {name}...")
-
-    model = trainer(X_train, y_train)
-    y_pred = model.predict(X_test)
-
-    results.append({
-        "Model": name,
-        "Accuracy": accuracy_score(y_test, y_pred),
-        "Precision": precision_score(y_test, y_pred, average="weighted"),
-        "Recall": recall_score(y_test, y_pred, average="weighted"),
-        "F1 Score": f1_score(y_test, y_pred, average="weighted")
-    })
-
-# ============================
-# RESULTS TABLE
-# ============================
-
-results_df = pd.DataFrame(results)
-
-results_df = results_df.sort_values(
-    by="F1 Score",
-    ascending=False
-)
-
-print("\n========== MODEL COMPARISON ==========\n")
-print(results_df.round(6))
-
-# ============================
-# SAVE RESULTS
-# ============================
-
-results_df.to_csv(
-    "results/model_comparison.csv",
-    index=False
-)
-
-print("\nResults saved to results/model_comparison.csv")
+print(_MSG, file=sys.stderr)
+raise SystemExit(2)
