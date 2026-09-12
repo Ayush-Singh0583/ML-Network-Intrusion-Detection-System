@@ -73,6 +73,47 @@ def initialize_database():
     )
     """)
 
+    # ===========================
+    # SCAN ALERTS TABLE
+    # ===========================
+    #
+    # Deliberately NOT a row in `flows`. A scan alert is a statement about a
+    # SOURCE over a WINDOW: it has no flow_id, no duration and no packet
+    # count, and the flow that triggered it is not the finding -- the pattern
+    # across hundreds of flows is. Forcing it into the per-flow predictions
+    # would mean inventing values for columns that have no meaning here, and
+    # would make "how many scans today" a query over a column that mixes two
+    # different kinds of judgement.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS scan_alerts (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        kind TEXT,                  -- 'vertical' | 'horizontal'
+
+        src_ip TEXT,
+
+        distinct_count INTEGER,     -- distinct ports (vertical) or hosts (horizontal)
+        threshold INTEGER,
+
+        window_seconds REAL,
+
+        observations INTEGER,       -- events from this source still in the window
+
+        first_seen REAL,
+        last_seen REAL,
+
+        sample TEXT,                -- a few example ports/hosts, for the analyst
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # The dashboard reads the newest alerts and counts per source; without
+    # these every poll is a full scan of the table.
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_scan_alerts_id ON scan_alerts(id DESC)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_scan_alerts_src ON scan_alerts(src_ip)")
+
     conn.commit()
 
     conn.close()
@@ -278,3 +319,78 @@ def get_statistics():
     conn.close()
 
     return stats
+
+
+# ==========================================
+# SCAN ALERTS
+# ==========================================
+
+
+def insert_scan_alerts(alerts):
+    """Persist a batch of ScanAlert objects.
+
+    Batched on purpose: the cleanup worker drains a list once per tick, and
+    one transaction for the batch beats one per alert. During an actual scan
+    that is the difference between a handful of commits and thousands.
+    """
+    if not alerts:
+        return 0
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.executemany(
+        """
+        INSERT INTO scan_alerts(
+            kind, src_ip, distinct_count, threshold, window_seconds,
+            observations, first_seen, last_seen, sample
+        ) VALUES (?,?,?,?,?,?,?,?,?)
+        """,
+        [
+            (
+                a.kind, a.src_ip, a.distinct, a.threshold, a.window_seconds,
+                a.observations, a.first_seen, a.last_seen, ",".join(a.sample),
+            )
+            for a in alerts
+        ],
+    )
+    conn.commit()
+    conn.close()
+    return len(alerts)
+
+
+def get_recent_scan_alerts(limit=100):
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM scan_alerts ORDER BY id DESC LIMIT ?", (limit,)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_scan_alert_summary():
+    """Counts by kind and the worst offenders, for the dashboard header."""
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT kind, COUNT(*) AS n FROM scan_alerts GROUP BY kind")
+    by_kind = {r["kind"]: r["n"] for r in cursor.fetchall()}
+
+    cursor.execute(
+        """
+        SELECT src_ip,
+               COUNT(*)            AS alerts,
+               MAX(distinct_count) AS peak_distinct,
+               MAX(last_seen)      AS last_seen
+        FROM scan_alerts
+        GROUP BY src_ip
+        ORDER BY alerts DESC, peak_distinct DESC
+        LIMIT 10
+        """
+    )
+    top = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return {"total": sum(by_kind.values()), "by_kind": by_kind, "top_sources": top}

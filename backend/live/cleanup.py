@@ -5,12 +5,14 @@ import logging
 from backend.live.flow_manager import (
     flows,
     flows_lock,
-    live_stats
+    live_stats,
+    drain_scan_alerts
 )
+from backend.live.scan_tracker import scan_tracker
 
 from backend.live.extractor import extract_features
 from backend.services.model_service import predict
-from backend.database import insert_flow
+from backend.database import insert_flow, insert_scan_alerts
 
 
 # ==========================================
@@ -152,6 +154,29 @@ def cleanup_worker():
                         f"Error processing flow {flow_id}: {err}"
 
                     )
+
+            # -----------------------------
+            # Scan alerts
+            # -----------------------------
+            # The capture thread queues these and does no I/O itself -- a
+            # disk write in the packet path drops packets. Writing them here
+            # keeps persistence on the worker where it belongs.
+            try:
+                alerts = drain_scan_alerts()
+                if alerts:
+                    insert_scan_alerts(alerts)
+                    for a in alerts:
+                        logger.warning("SCAN  %s", a.describe())
+            except Exception as err:      # noqa: BLE001
+                logger.error(f"Failed to persist scan alerts: {err}")
+
+            # Drop windows for sources that have gone quiet. Not needed for
+            # correctness -- observe() expires the source it touches -- but a
+            # source that stops transmitting would hold its window forever.
+            try:
+                scan_tracker.sweep(current)
+            except Exception as err:      # noqa: BLE001
+                logger.error(f"Scan tracker sweep failed: {err}")
 
         except Exception as err:
 

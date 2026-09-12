@@ -12,10 +12,13 @@ from backend.live.capture import (
 
 from backend.database import (
     get_recent_flows,
-    get_statistics
+    get_statistics,
+    get_recent_scan_alerts,
+    get_scan_alert_summary
 )
 
-from backend.live.flow_manager import flows
+from backend.live.flow_manager import flows, flows_lock
+from backend.live.scan_tracker import scan_tracker
 
 router = APIRouter()
 
@@ -105,8 +108,47 @@ def live_history():
 def live_stats():
 
     stats = get_statistics()
-    stats["active_flows"] = len(flows)
+
+    # len() on a dict being mutated by the capture thread is not safe to rely
+    # on; take the lock the flow manager already uses.
+    with flows_lock:
+        stats["active_flows"] = len(flows)
+
+    stats["scan_detector"] = scan_tracker.snapshot()
     return stats
+
+
+# ==========================================
+# SCAN ALERTS -- a separate resource
+# ==========================================
+#
+# Not folded into /live/history. A scan alert is a statement about a SOURCE
+# over a WINDOW; a flow prediction is a statement about one flow. They have
+# different shapes, different lifetimes and different audiences, and merging
+# them would mean a client could not ask for one without filtering the other.
+
+
+@router.get("/live/scans")
+def live_scans(limit: int = 100):
+    """Recent scan alerts, newest first."""
+    return {
+        "alerts": get_recent_scan_alerts(limit),
+        "summary": get_scan_alert_summary(),
+    }
+
+
+@router.get("/live/scans/active")
+def live_scans_active(limit: int = 10):
+    """Live view of the sliding window -- sources being watched right now.
+
+    Reads the in-memory tracker rather than the database, so it shows what is
+    happening this minute including sources that have not yet crossed a
+    threshold. That is the view an analyst wants while a scan is in progress.
+    """
+    return {
+        "detector": scan_tracker.snapshot(),
+        "top_sources": scan_tracker.top_sources(limit),
+    }
 
 
 # ==========================================
