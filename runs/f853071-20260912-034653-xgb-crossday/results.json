@@ -1,0 +1,215 @@
+{
+  "detection_by_class": [
+    {
+      "fpr_budget": 0.001,
+      "threshold": 0.27478306102764555,
+      "class": "Bot",
+      "n": 1966,
+      "detection_rate": 0.0,
+      "observed_benign_fpr": 0.0014265886186711726,
+      "false_alerts_per_day": 14251.620300525014,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.001,
+      "threshold": 0.27478306102764555,
+      "class": "PortScan",
+      "n": 158930,
+      "detection_rate": 0.002309192726357516,
+      "observed_benign_fpr": 0.0014265886186711726,
+      "false_alerts_per_day": 14251.620300525014,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.001,
+      "threshold": 0.27478306102764555,
+      "class": "DDoS",
+      "n": 128027,
+      "detection_rate": 0.6193302975153678,
+      "observed_benign_fpr": 0.0014265886186711726,
+      "false_alerts_per_day": 14251.620300525014,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.001,
+      "threshold": 0.27478306102764555,
+      "class": "__ANY_ATTACK__",
+      "n": 288923,
+      "detection_rate": 0.27570667617323646,
+      "observed_benign_fpr": 0.0014265886186711726,
+      "false_alerts_per_day": 14251.620300525014,
+      "projected_true_alerts_per_day": 2757.0667617323647,
+      "projected_precision": 0.16209756529946112
+    },
+    {
+      "fpr_budget": 0.01,
+      "threshold": 0.006130252964794636,
+      "class": "Bot",
+      "n": 1966,
+      "detection_rate": 0.000508646998982706,
+      "observed_benign_fpr": 0.04379699474986422,
+      "false_alerts_per_day": 437531.97755114356,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.01,
+      "threshold": 0.006130252964794636,
+      "class": "PortScan",
+      "n": 158930,
+      "detection_rate": 0.0062228654124457305,
+      "observed_benign_fpr": 0.04379699474986422,
+      "false_alerts_per_day": 437531.97755114356,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.01,
+      "threshold": 0.006130252964794636,
+      "class": "DDoS",
+      "n": 128027,
+      "detection_rate": 0.6361939278433455,
+      "observed_benign_fpr": 0.04379699474986422,
+      "false_alerts_per_day": 437531.97755114356,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.01,
+      "threshold": 0.006130252964794636,
+      "class": "__ANY_ATTACK__",
+      "n": 288923,
+      "detection_rate": 0.2853355392267144,
+      "observed_benign_fpr": 0.04379699474986422,
+      "false_alerts_per_day": 437531.97755114356,
+      "projected_true_alerts_per_day": 2853.355392267144,
+      "projected_precision": 0.0064792243946820965
+    },
+    {
+      "fpr_budget": 0.05,
+      "threshold": 0.00041244934545829306,
+      "class": "Bot",
+      "n": 1966,
+      "detection_rate": 0.09409969481180061,
+      "observed_benign_fpr": 0.09479452054794521,
+      "false_alerts_per_day": 946997.2602739726,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.05,
+      "threshold": 0.00041244934545829306,
+      "class": "PortScan",
+      "n": 158930,
+      "detection_rate": 0.05414962562134273,
+      "observed_benign_fpr": 0.09479452054794521,
+      "false_alerts_per_day": 946997.2602739726,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.05,
+      "threshold": 0.00041244934545829306,
+      "class": "DDoS",
+      "n": 128027,
+      "detection_rate": 0.6699680536136908,
+      "observed_benign_fpr": 0.09479452054794521,
+      "false_alerts_per_day": 946997.2602739726,
+      "projected_true_alerts_per_day": NaN,
+      "projected_precision": NaN
+    },
+    {
+      "fpr_budget": 0.05,
+      "threshold": 0.00041244934545829306,
+      "class": "__ANY_ATTACK__",
+      "n": 288923,
+      "detection_rate": 0.32730173783326355,
+      "observed_benign_fpr": 0.09479452054794521,
+      "false_alerts_per_day": 946997.2602739726,
+      "projected_true_alerts_per_day": 3273.0173783326354,
+      "projected_precision": 0.0034443015374729007
+    }
+  ],
+  "closed_set": {
+    "tag": "closed_set",
+    "n_samples": 414275,
+    "labels": [
+      "BENIGN",
+      "DoS GoldenEye",
+      "DoS Hulk",
+      "DoS Slowhttptest",
+      "DoS slowloris",
+      "FTP-Patator",
+      "Heartbleed",
+      "Infiltration",
+      "SSH-Patator",
+      "WebAttack_BruteForce",
+      "WebAttack_SQLInjection",
+      "WebAttack_XSS"
+    ],
+    "metrics": {
+      "accuracy": 0.9994013638283749,
+      "macro_precision": 0.08333333333333333,
+      "macro_recall": 0.08328344698569791,
+      "macro_f1": 0.08330838269133721,
+      "weighted_precision": 1.0,
+      "weighted_recall": 0.9994013638283749,
+      "weighted_f1": 0.9997005922960466,
+      "macro_precision_present": 1.0,
+      "macro_recall_present": 0.9994013638283749,
+      "macro_f1_present": 0.9997005922960466,
+      "n_classes_true": 1.0,
+      "n_classes_union": 12.0,
+      "balanced_accuracy": NaN,
+      "mcc": NaN
+    }
+  },
+  "open_set": {
+    "tag": "open_set",
+    "n_samples": 703198,
+    "labels": [
+      "BENIGN",
+      "DoS GoldenEye",
+      "DoS Hulk",
+      "DoS Slowhttptest",
+      "DoS slowloris",
+      "FTP-Patator",
+      "SSH-Patator",
+      "Unknown_Attack",
+      "WebAttack_BruteForce",
+      "WebAttack_SQLInjection",
+      "WebAttack_XSS"
+    ],
+    "metrics": {
+      "accuracy": 0.592086439381227,
+      "macro_precision": 0.10454976724176589,
+      "macro_recall": 0.09558220698038263,
+      "macro_f1": 0.08921688749669483,
+      "weighted_precision": 0.5860639791739217,
+      "weighted_recall": 0.592086439381227,
+      "weighted_f1": 0.5360821943983809,
+      "macro_precision_present": 0.5750237198297123,
+      "macro_recall_present": 0.5257021383921044,
+      "macro_f1_present": 0.4906928812318216,
+      "n_classes_true": 2.0,
+      "n_classes_union": 11.0,
+      "balanced_accuracy": 0.5257021383921044,
+      "mcc": 0.1388555881629548
+    }
+  },
+  "detection": {
+    "scorer": "mahalanobis",
+    "auroc": 0.656570307581919,
+    "aupr": 0.48316084219529126,
+    "tau": 163.39409906928458,
+    "unknown_recall@tau": 0.1533003603036103,
+    "known_rejection@tau": 0.10145917566833625,
+    "tpr@5%fpr": 0.016900696725425112,
+    "n_known": 414275,
+    "n_unknown": 288923
+  },
+  "wall_clock_seconds": 268.7453682422638
+}

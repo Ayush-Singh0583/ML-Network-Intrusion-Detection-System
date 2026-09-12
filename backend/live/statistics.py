@@ -57,11 +57,8 @@ def calculate_iat(timestamps):
         return []
 
     return [
-
-        timestamps[i] - timestamps[i - 1]
-
+        (timestamps[i] - timestamps[i - 1]) * 1_000_000.0
         for i in range(1, len(timestamps))
-
     ]
 
 

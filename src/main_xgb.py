@@ -1,95 +1,24 @@
-from preprocessing import *
-from training import *
-from evaluation import *
+"""
+DEPRECATED -- main_xgb.py
 
+Hard-coded UNKNOWN_THRESHOLD = 0.90 (CLAUDE.md declares 0.55) and reported
+metrics on the same Friday data the threshold was chosen against.
 
-# ============================
-# MODEL SELECTION
-# ============================
+Replacement:
+    python src/run.py train --model xgb --protocol crossday
+"""
 
-MODEL = "xgboost"
+import sys
 
+_MSG = """
+main_xgb.py has been replaced.
 
-# ============================
-# PREPARE DATA
-# ============================
+  Why : uncalibrated rejection threshold, evaluated on the test day
+  Use : python src/run.py train --model xgb --protocol crossday
 
-(
-    X_train,
-    X_test,
-    y_train,
-    y_test,
-    scaler,
-    encoder,
-    feature_names
-) = prepare_data(save_csv=True)
+The previous implementation is preserved at
+_backup/src_pre_refactor_20260826/main_xgb.py
+"""
 
-
-# ============================
-# TRAIN MODEL
-# ============================
-
-model = train_xgboost(
-    X_train,
-    y_train
-)
-
-
-# ============================
-# EVALUATION
-# ============================
-
-y_pred = evaluate_model(
-    model,
-    X_test,
-    y_test
-)
-
-
-# ============================
-# FEATURE IMPORTANCE
-# ============================
-
-feature_importance(
-    model,
-    feature_names,
-    MODEL
-)
-
-
-# ============================
-# SAVE MODEL
-# ============================
-
-save_model(
-    model,
-    scaler,
-    encoder,
-    feature_names.tolist(),
-    MODEL
-)
-
-
-# ============================
-# MODEL INFORMATION
-# ============================
-
-print("\n========== MODEL INFORMATION ==========")
-
-print("Model Type :", MODEL)
-print("Number of Trees :", model.n_estimators)
-print("Maximum Depth :", model.max_depth)
-print("Learning Rate :", model.learning_rate)
-
-train_accuracy = model.score(
-    X_train,
-    y_train
-)
-
-test_accuracy = model.score(
-    X_test,
-    y_test
-)
-
-print(f"Training Accuracy : {train_accuracy:.6f}")
-print(f"Testing Accuracy  : {test_accuracy:.6f}")
+print(_MSG, file=sys.stderr)
+raise SystemExit(2)

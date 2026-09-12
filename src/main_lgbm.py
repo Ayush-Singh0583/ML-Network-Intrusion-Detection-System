@@ -1,107 +1,23 @@
-from preprocessing import *
-from training import *
-from evaluation import *
+"""
+DEPRECATED -- main_lgbm.py
 
-# ============================
-# LOAD DATASET
-# ============================
+Random split; subsample=0.8 was a no-op because subsample_freq defaulted to 0.
 
-df = load_all_datasets("data")
-print("After Loading:", df.shape)
+Replacement:
+    python src/run.py train --model lgbm --protocol closedset
+"""
 
-# ============================
-# CLEAN DATASET
-# ============================
+import sys
 
-df = clean_dataset(df)
-print("After Cleaning:", df.shape)
+_MSG = """
+main_lgbm.py has been replaced.
 
-df = remove_identifier_columns(df)
-print("After Removing Columns:", df.shape)
+  Why : random split; LightGBM bagging never actually ran
+  Use : python src/run.py train --model lgbm --protocol closedset
 
-# ============================
-# FEATURE / TARGET
-# ============================
+The previous implementation is preserved at
+_backup/src_pre_refactor_20260826/main_lgbm.py
+"""
 
-X, y = split_features_target(df)
-feature_names = X.columns
-
-print("X Shape:", X.shape)
-print("y Shape:", y.shape)
-
-# ============================
-# ENCODE LABELS
-# ============================
-
-y, encoder = encode_labels(y)
-
-# ============================
-# SPLIT
-# ============================
-
-X_train, X_test, y_train, y_test = split_dataset(X, y)
-
-# ============================
-# SCALE
-# ============================
-
-X_train, X_test, scaler = scale_dataset(X_train, X_test)
-
-# ============================
-# TRAIN
-# ============================
-
-MODEL = "lightgbm"
-
-model = train_lightgbm(
-    X_train,
-    y_train
-)
-
-# ============================
-# EVALUATE
-# ============================
-
-y_pred = evaluate_model(
-    model,
-    X_test,
-    y_test
-)
-
-# ============================
-# FEATURE IMPORTANCE
-# ============================
-
-feature_importance(
-    model,
-    feature_names
-)
-
-# ============================
-# SAVE
-# ============================
-
-save_model(
-    model,
-    scaler,
-    encoder,
-    feature_names.tolist(),
-    MODEL
-)
-
-# ============================
-# INFO
-# ============================
-
-print("\n========== MODEL INFORMATION ==========")
-
-print("Model Type :", MODEL)
-print("Number of Trees :", model.n_estimators)
-print("Maximum Depth :", model.max_depth)
-print("Learning Rate :", model.learning_rate)
-
-train_accuracy = model.score(X_train, y_train)
-test_accuracy = model.score(X_test, y_test)
-
-print(f"Training Accuracy : {train_accuracy:.6f}")
-print(f"Testing Accuracy  : {test_accuracy:.6f}")
+print(_MSG, file=sys.stderr)
+raise SystemExit(2)

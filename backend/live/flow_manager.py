@@ -4,9 +4,18 @@ import threading
 from scapy.layers.inet import IP, TCP, UDP
 
 from backend.live.models import Flow
+from backend.live.scan_tracker import scan_tracker
 
 flows = {}
 flows_lock = threading.Lock()
+
+# Scan alerts raised since the last drain, waiting to be persisted.
+#
+# process_packet runs on scapy's capture thread and must never touch the
+# database: a disk write in the packet path drops packets. Alerts are queued
+# here and the cleanup worker writes them.
+pending_scan_alerts = []
+scan_alerts_lock = threading.Lock()
 
 # ==========================================
 # LIVE COUNTERS
@@ -119,6 +128,33 @@ def process_packet(packet):
 
             live_stats["flows_created"] += 1
 
+            # ------------------------------------------------------------
+            # SCAN DETECTION -- observed HERE, at flow creation.
+            #
+            # Not in the cleanup worker. A SYN scan against closed ports
+            # produces flows that get one packet and never another, so they
+            # sit in this table until IDLE_TIMEOUT (5s) fires. Feeding the
+            # tracker on expiry would report a scan roughly six seconds
+            # after it ended, in one lump, having ignored every packet while
+            # it was happening.
+            #
+            # A new flow key IS the observation "this source just touched
+            # this port". No model involved, no waiting.
+            #
+            # Uses the ORIGINAL packet direction, not the canonicalised flow
+            # key: create_flow_key sorts the endpoints so that both
+            # directions hash together, which would attribute half of a scan
+            # to the victim.
+            # ------------------------------------------------------------
+            alerts = scan_tracker.observe(
+                src_ip=src_ip, dst_ip=dst_ip, dst_port=dst_port,
+                now=current_time,
+            )
+            if alerts:
+                # Queue only. The capture thread does no I/O.
+                with scan_alerts_lock:
+                    pending_scan_alerts.extend(alerts)
+
         # Get Flow Object
         flow = flows[flow_id]
 
@@ -131,14 +167,15 @@ def process_packet(packet):
         if flow.last_packet_time is not None:
 
             gap = current_time - flow.last_packet_time
+            gap_us = gap * 1_000_000.0
 
             if gap > 1:
 
-                flow.idle_times.append(gap)
+                flow.idle_times.append(gap_us)
 
             else:
 
-                flow.active_times.append(gap)
+                flow.active_times.append(gap_us)
 
         flow.last_packet_time = current_time
 
@@ -301,3 +338,11 @@ def process_packet(packet):
         f" | Bytes={flow.bytes}"
 
     )
+
+
+def drain_scan_alerts():
+    """Take and clear the queued scan alerts. Called by the cleanup worker."""
+    with scan_alerts_lock:
+        out = list(pending_scan_alerts)
+        pending_scan_alerts.clear()
+    return out

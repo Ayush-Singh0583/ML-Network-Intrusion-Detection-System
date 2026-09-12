@@ -1,12 +1,24 @@
-import joblib
+"""
+DEPRECATED -- prediction.py
 
+Loaded models/logistic_model.pkl -- a 1.5 KB artifact from a model whose entry
+point was a TODO stub.
 
-def load_saved_model():
+Replacement:
+    python src/predict.py --bundle saved_models/<name> --csv <file>
+"""
 
-    model = joblib.load("models/logistic_model.pkl")
+import sys
 
-    scaler = joblib.load("models/scaler.pkl")
+_MSG = """
+prediction.py has been replaced.
 
-    encoder = joblib.load("models/label_encoder.pkl")
+  Why : loaded an orphaned artifact
+  Use : python src/predict.py --bundle saved_models/<name> --csv <file>
 
-    return model, scaler, encoder
+The previous implementation is preserved at
+_backup/src_pre_refactor_20260826/prediction.py
+"""
+
+print(_MSG, file=sys.stderr)
+raise SystemExit(2)

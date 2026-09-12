@@ -108,3 +108,15 @@ src/analyze_features.py
 
 predicted_output.csv
 sample_request.json
+
+# ==========================================
+# Derived data - regenerable, never committed
+# ==========================================
+# Parquet cache built by `python src/run.py cache` (~216 MB, 2 min to rebuild)
+/cache/
+
+# Linux virtualenv (the .venv/ rule above does not match this name)
+/.venv_linux/
+
+# Binary archives of the pre-refactor source
+_backup/*.tar.gz

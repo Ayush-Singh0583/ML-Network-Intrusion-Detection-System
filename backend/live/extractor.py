@@ -27,6 +27,7 @@ from backend.live.statistics import (
 def extract_features(flow):
 
     duration = max(flow.last_seen - flow.first_seen, 0.000001)
+    duration_us = duration * 1_000_000.0
 
     packet_lengths = flow.packet_lengths
     fwd_lengths = flow.forward_lengths
@@ -43,7 +44,7 @@ def extract_features(flow):
         ##################################################
 
         "Destination Port": flow.dst_port,
-        "Flow Duration": duration,
+        "Flow Duration": duration_us,
 
         "Total Fwd Packets": flow.forward_packets,
         "Total Backward Packets": flow.backward_packets,
