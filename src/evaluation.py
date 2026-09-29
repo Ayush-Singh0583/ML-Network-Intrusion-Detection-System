@@ -18,6 +18,7 @@ It also removes the fixed output paths.  Results go to
 from __future__ import annotations
 
 import json
+import textwrap
 import warnings
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -467,8 +468,14 @@ def detection_by_class(
 
 
 def format_detection_table(df: "pd.DataFrame", flows_per_day: int = 10_000_000,
-                           prevalence: float = 0.001) -> str:
-    """Render detection_by_class() as the report a security engineer reads."""
+                           prevalence: float = 0.001,
+                           accuracy: Optional[Dict[str, float]] = None) -> str:
+    """Render detection_by_class() as the report a security engineer reads.
+
+    ``accuracy`` is this run's {multi_class, binary, all_benign_baseline}.
+    The footer used to print fixed figures (58.47% / 69.68% / 58.91%) from
+    one earlier Random Forest run, whatever model or data produced the table.
+    """
     lines = [
         "",
         "=" * 78,
@@ -494,11 +501,18 @@ def format_detection_table(df: "pd.DataFrame", flows_per_day: int = 10_000_000,
             f"   true alerts/day {summ.get('projected_true_alerts_per_day', float('nan')):>10,.0f}"
             f"   precision {summ.get('projected_precision', float('nan')):>7.2%}",
         ]
-    lines += [
-        "",
-        "Read this, not accuracy. Accuracy on this split is ambiguous (58.47%",
-        "multi-class vs 69.68% binary, against a 58.91% all-BENIGN baseline) and",
-        "the multi-class figure is below the constant-function baseline.",
-        "=" * 78,
-    ]
+    if accuracy is not None:
+        m = accuracy["multi_class"]
+        b = accuracy["binary"]
+        base = accuracy["all_benign_baseline"]
+        tail = (" and the multi-class figure is below the constant-function baseline."
+                if m < base else ".")
+        footer = (f"Read this, not accuracy. Accuracy on this split is ambiguous "
+                  f"({m:.2%} multi-class vs {b:.2%} binary, against a {base:.2%} "
+                  f"all-BENIGN baseline){tail}")
+    else:
+        footer = ("Read this, not accuracy. On this split multi-class and binary "
+                  "accuracy can disagree by double digits, and neither says what "
+                  "gets caught.")
+    lines += ["", *textwrap.wrap(footer, 78, break_on_hyphens=False), "=" * 78]
     return "\n".join(lines)

@@ -112,15 +112,22 @@ def process_packet(packet):
 
         if flow_id not in flows:
 
+            # src/dst come from the FIRST packet, not from the sorted key.
+            # CICFlowMeter (what the model was trained on) defines "forward"
+            # as the first packet's direction, and the `forward` test below
+            # compares against these fields. Taking them from the sorted key
+            # made "forward" mean "whichever IP sorts first as a string", so
+            # for many connections every Fwd/Bwd feature was swapped and the
+            # history showed the server as the source.
             flows[flow_id] = Flow(
 
                 flow_id=flow_id,
 
-                src_ip=flow_key[0],
-                dst_ip=flow_key[2],
+                src_ip=src_ip,
+                dst_ip=dst_ip,
 
-                src_port=flow_key[1],
-                dst_port=flow_key[3],
+                src_port=src_port,
+                dst_port=dst_port,
 
                 protocol=protocol
 

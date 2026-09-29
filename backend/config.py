@@ -32,10 +32,16 @@ DATA_DIR = BASE_DIR / "data"
 # Produced by:  python src/run.py train --model rf --protocol crossday
 BUNDLE_NAME = os.environ.get("NIDS_BUNDLE", "random_forest_crossday")
 
-# CORS origins for the React dev server / deployment
+# CORS origins for the React dev server (5173) / `npm run preview` (4173) /
+# deployment. Both loopback names: opening the dashboard at 127.0.0.1 instead
+# of localhost is a different origin and was blocked.
 ALLOWED_ORIGINS = [
     o.strip()
-    for o in os.environ.get("NIDS_CORS_ORIGINS", "http://localhost:5173").split(",")
+    for o in os.environ.get(
+        "NIDS_CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:4173,http://127.0.0.1:4173",
+    ).split(",")
     if o.strip()
 ]
 

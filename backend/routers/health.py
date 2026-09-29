@@ -73,4 +73,7 @@ def model_info() -> Dict[str, Any]:
         "smoke_test": bool(meta.get("SMOKE_TEST")),
         "note": meta.get("note"),
         "metrics": headline,
+        # Measured on the test day when the bundle was trained; None for
+        # bundles saved before this was recorded.
+        "accuracy_readings": meta.get("accuracy_readings"),
     }

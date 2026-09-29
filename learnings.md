@@ -50,3 +50,27 @@ This log tracks architectural decisions, optimization experiments, what works, w
 3. **Record refuted hypotheses and negligible effects.** "Weight decay on norm gains was suspected as the collapse cause; measured 0.870 → 0.870" is expensive to rediscover and cheap to write down.
 4. **Prefer a measured number with its conditions** over a qualitative claim. "Energy AUROC 0.120 under BatchNorm, 0.630 under LayerNorm, 12-class ablation at CIC-IDS2017 imbalance" beats "energy detects unknowns".
 5. **Verify a hook by firing it**, not by reading its config. The previous one looked correct and was inert.
+
+---
+
+## [2026-09-29] - Error sweep: lint, lockfile, live capture, flow direction
+
+### ✅ What Worked
+- **Running the whole product on synthetic CIC-shaped CSVs** (built through `backend/live/extractor.py`, real header quirks included): `cache → train → bundle → API → dashboard` end to end without the real dataset. Found three bugs the 66 unit tests could not see.
+- **AsyncSniffer + `started_callback`** for capture: Stop really stops, and a start that cannot open the interface returns 503 with the reason.
+
+### ❌ What Failed / Gotchas
+- **Flow direction came from the sorted flow key**, not the first packet. "Forward" meant "whichever IP sorts first as a string", so Fwd/Bwd features were swapped for many connections and the history showed servers as sources. The wiki (`Live-Packet-Flow-Pipeline`) described the correct design; the code did not follow it.
+- **`sniff(stop_filter=...)` only checks the flag when a packet arrives.** Stop then Start left two sniffers running.
+- **A dead sniffer thread still reported `running: true`**: the Event flag outlived the thread.
+- **Report footer and dashboard hardcoded 58.47% / 69.68% / 58.91%** from one RF run, for every model. Now computed per run and stored in the bundle as `accuracy_readings`.
+- `package-lock.json` was missing `@emnapi/*` entries: `npm ci` failed on npm 10 and 11.
+
+### 🔬 Measured, Not Assumed
+- Stop→Start race: **2.00** `process_packet` calls per packet on the wire before the fix, **0.98** after (reference sniffer on the same interface, live traffic).
+- Frontend: 9 ESLint errors + 1 warning → 0. `npm audit`: 5 vulnerabilities (4 high, all build tooling) → 0 via `npm audit fix`, no `package.json` change.
+- Tests: 66 → 73 passing (`tests/test_live_fixes.py`).
+
+### 💡 Actionable Rule for Next Sessions
+- Anything the UI or a report states about a model must come from the bundle's manifest, never from a literal.
+- A thread-backed "running" status must ask the thread (`is_alive()`), not a flag.

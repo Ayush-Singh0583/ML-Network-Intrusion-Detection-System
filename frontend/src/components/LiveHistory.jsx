@@ -41,7 +41,11 @@ export default function LiveHistory({ history = [], addToast }) {
     // Pagination calculations
     const totalItems = filteredHistory.length;
     const totalPages = Math.ceil(totalItems / pageSize) || 1;
-    const startIndex = (currentPage - 1) * pageSize;
+    // History is a moving window of the newest 50 flows, so the filtered list
+    // can shrink under the reader. Clamp, or they sit on "Page 3 of 2" looking
+    // at an empty table.
+    const page = Math.min(currentPage, totalPages);
+    const startIndex = (page - 1) * pageSize;
     const paginatedHistory = filteredHistory.slice(startIndex, startIndex + pageSize);
 
     const handleSearchChange = (e) => {
@@ -185,18 +189,18 @@ export default function LiveHistory({ history = [], addToast }) {
                     <div className="pagination-btns">
                         <button
                             className="btn-pagination"
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(Math.max(page - 1, 1))}
+                            disabled={page === 1}
                         >
                             &lt; Prev
                         </button>
                         <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                            Page {currentPage} of {totalPages}
+                            Page {page} of {totalPages}
                         </span>
                         <button
                             className="btn-pagination"
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(Math.min(page + 1, totalPages))}
+                            disabled={page === totalPages}
                         >
                             Next &gt;
                         </button>

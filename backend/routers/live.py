@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Response
-import threading
+from fastapi import APIRouter, HTTPException, Response
 import io
 import csv
 import json
 
 from backend.live.capture import (
+    CaptureError,
     start_capture,
     stop_capture,
     is_capture_running
@@ -22,9 +22,6 @@ from backend.live.scan_tracker import scan_tracker
 
 router = APIRouter()
 
-capture_thread = None
-
-
 # ==========================================
 # START LIVE CAPTURE
 # ==========================================
@@ -32,21 +29,21 @@ capture_thread = None
 @router.post("/live/start")
 def start_live_capture():
 
-    global capture_thread
+    try:
+        started = start_capture()
+    except CaptureError as exc:
+        # Usually: not running as admin/root, or Npcap missing on Windows.
+        # This used to answer "started" while nothing was capturing.
+        raise HTTPException(
+            status_code=503,
+            detail=f"Live capture could not start: {exc}"
+        ) from exc
 
-    # Already running
-    if capture_thread and capture_thread.is_alive():
+    if not started:
 
         return {
             "message": "Live capture is already running."
         }
-
-    capture_thread = threading.Thread(
-        target=start_capture,
-        daemon=True
-    )
-
-    capture_thread.start()
 
     return {
         "message": "Live packet capture started."
@@ -60,18 +57,11 @@ def start_live_capture():
 @router.post("/live/stop")
 def stop_live_capture():
 
-    global capture_thread
-
-    if not is_capture_running():
+    if not stop_capture():
 
         return {
             "message": "Capture is not running."
         }
-
-    stop_capture()
-
-    if capture_thread:
-        capture_thread = None
 
     return {
         "message": "Live packet capture stopped."

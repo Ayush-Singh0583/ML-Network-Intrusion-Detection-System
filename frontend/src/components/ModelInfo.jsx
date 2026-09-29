@@ -18,12 +18,27 @@ import axios from "axios";
  * It now reads GET /model, so the panel cannot drift from what is loaded. It
  * also reports DETECTION RATE AT A FIXED FALSE-ALARM BUDGET rather than
  * accuracy: on this dataset accuracy is ambiguous (58.47% multi-class vs
- * 69.68% binary against a 58.91% all-benign baseline) and says nothing about
- * whether the thing works.
+ * 69.68% binary against a 58.91% all-benign baseline, on one Random Forest
+ * run) and says nothing about whether the thing works.
+ *
+ * Those three figures were then typed into the note under the table, so
+ * every other bundle was shown one run's accuracy. The note now uses
+ * accuracy_readings from GET /model, measured when the bundle was trained.
  */
 
 const API = "http://127.0.0.1:8000";
 const pct = (x) => (x == null ? "—" : `${(x * 100).toFixed(2)}%`);
+
+// Module scope, not inside ModelInfo: a component defined during render is
+// a new type on every render, so React unmounts and remounts it each time.
+function Metric({ label, value, cls = "" }) {
+    return (
+        <div className="model-metric">
+            <span className="model-metric-label">{label}</span>
+            <span className={`model-metric-value ${cls}`}>{value}</span>
+        </div>
+    );
+}
 
 export default function ModelInfo() {
     const [info, setInfo] = useState(null);
@@ -37,12 +52,7 @@ export default function ModelInfo() {
         return () => { alive = false; };
     }, []);
 
-    const Metric = ({ label, value, cls = "" }) => (
-        <div className="model-metric">
-            <span className="model-metric-label">{label}</span>
-            <span className={`model-metric-value ${cls}`}>{value}</span>
-        </div>
-    );
+    const acc = info?.accuracy_readings;
 
     return (
         <div className="model-card card">
@@ -106,9 +116,18 @@ export default function ModelInfo() {
                                 </tbody>
                             </table>
                             <p className="detect-note">
-                                Detection rate at a fixed false-alarm budget, not accuracy — accuracy on this
-                                split is ambiguous (58.47% multi-class vs 69.68% binary, against a 58.91%
-                                all-benign baseline).
+                                Detection rate at a fixed false-alarm budget, not accuracy — {acc ? (
+                                    <>
+                                        accuracy on this bundle's test day is ambiguous
+                                        ({pct(acc.multi_class)} multi-class vs {pct(acc.binary)} binary,
+                                        against a {pct(acc.all_benign_baseline)} all-benign baseline).
+                                    </>
+                                ) : (
+                                    <>
+                                        multi-class and binary accuracy can disagree by double digits
+                                        on this split, and neither says what gets caught.
+                                    </>
+                                )}
                             </p>
                         </div>
                     ) : (

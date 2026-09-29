@@ -56,7 +56,9 @@ export default function LiveControls({ addToast }) {
             console.error(err);
 
             if (addToast) {
-                addToast("Unable to establish interface link.", "error");
+                // e.g. "not running as admin" / Npcap missing -- the API says which
+                const detail = err.response?.data?.detail;
+                addToast(detail || "Unable to establish interface link.", "error");
             } else {
                 alert("Unable to start live capture.");
             }
