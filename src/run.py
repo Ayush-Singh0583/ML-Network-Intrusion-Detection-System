@@ -130,6 +130,19 @@ def evaluate_classifier(
     is_unknown = unknown_mask(y_test_str, known_classes)
     results: Dict[str, dict] = {}
 
+    # The two accuracy readings, from THIS run's arrays. Exact-label accuracy
+    # counts every flow of an unseen class as wrong; attack-vs-benign does
+    # not. They were previously typed into the report as fixed numbers from
+    # one earlier run, whatever model or data this was.
+    yt = np.asarray(y_test_str, dtype=object)
+    yp = np.asarray(y_pred_str, dtype=object)
+    accuracy = {
+        "multi_class": float(np.mean(yp == yt)),
+        "binary": float(np.mean((yp != BENIGN_LABEL) == (yt != BENIGN_LABEL))),
+        "all_benign_baseline": float(np.mean(yt == BENIGN_LABEL)),
+    }
+    results["accuracy_readings"] = accuracy
+
     # ---- PRIMARY REPORT: detection per class at a fixed false-alarm budget --
     # Printed first, deliberately.  It is the only report here that answers the
     # question a detector exists to answer: what do you catch, and how much
@@ -141,7 +154,7 @@ def evaluate_classifier(
             y_test_str, p_attack_test, p_attack_val, y_val_str,
             budgets=(0.001, 0.01, 0.05),
         )
-        log(format_detection_table(det_df))
+        log(format_detection_table(det_df, accuracy=accuracy))
         det_df.to_csv(run_dir / "detection_by_class.csv", index=False)
         results["detection_by_class"] = det_df.to_dict(orient="records")
     else:
@@ -292,7 +305,8 @@ def run_sklearn(name: str, cfg: TrainConfig, args, log) -> Dict[str, dict]:
                             # in the repo produced. A UI that states a metric
                             # must read it from the artifact that earned it.
                             "detection_by_class": results.get("detection_by_class"),
-                            "detection": results.get("detection")},
+                            "detection": results.get("detection"),
+                            "accuracy_readings": results.get("accuracy_readings")},
                 scorer=scorer, novelty_tau=tau)
     return results
 

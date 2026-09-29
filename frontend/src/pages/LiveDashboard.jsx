@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 
 import LiveStats from "../components/LiveStats";
@@ -8,70 +8,107 @@ import LiveTrafficChart from "../components/LiveTrafficChart";
 
 const API = "http://127.0.0.1:8000";
 
+const POLL_MS = 2000;
+const TRAFFIC_POINTS = 30;   // points kept on the bandwidth chart, one per poll
+
 export default function LiveDashboard() {
 
     const [stats, setStats] = useState({});
     const [history, setHistory] = useState([]);
+    const [traffic, setTraffic] = useState([]);
     const [toasts, setToasts] = useState([]);
-    const [lastFlowId, setLastFlowId] = useState(null);
 
-    // Toast alert triggers
-    const addToast = (message, type = "info") => {
-        const id = Date.now();
+    // Newest flow id already checked for alerts. A ref, not state: it is
+    // never rendered. As state it sat in the polling effect's dependency
+    // list, so every new flow tore the timer down and fired an extra poll.
+    const lastFlowIdRef = useRef(null);
+    const toastSeqRef = useRef(0);
+
+    // Toast alert triggers. Stable identity, so the polling effect below
+    // subscribes once instead of on every render.
+    const addToast = useCallback((message, type = "info") => {
+        // A counter, not Date.now(): two toasts in the same millisecond got
+        // the same id -- a duplicate React key, and one timer removed both.
+        const id = ++toastSeqRef.current;
         setToasts(old => [...old, { id, message, type }]);
         setTimeout(() => {
             setToasts(old => old.filter(t => t.id !== id));
         }, 4000);
-    };
+    }, []);
 
-    async function loadData() {
+    useEffect(() => {
 
-        try {
+        let cancelled = false;
+        let timer = null;
 
-            const statsResponse =
-                await axios.get(`${API}/live/stats`);
+        async function loadData() {
 
-            const historyResponse =
-                await axios.get(`${API}/live/history`);
+            try {
 
-            setStats(statsResponse.data);
-            setHistory(historyResponse.data);
+                const statsResponse =
+                    await axios.get(`${API}/live/stats`);
 
-            // Reactive Alert check: search for new flows in recent history with prediction != "BENIGN"
-            if (historyResponse.data.length > 0) {
-                const latestFlow = historyResponse.data[0];
-                if (lastFlowId != null && latestFlow.id > lastFlowId) {
-                    const newAttacks = historyResponse.data.filter(
-                        flow => flow.id > lastFlowId && flow.prediction !== "BENIGN"
-                    );
-                    if (newAttacks.length > 0) {
-                        addToast(`SECURITY ALERT: ${newAttacks.length} anomaly vectors detected!`, "error");
+                const historyResponse =
+                    await axios.get(`${API}/live/history`);
+
+                if (cancelled) return;
+
+                setStats(statsResponse.data);
+                setHistory(historyResponse.data);
+
+                // One chart point per poll, added where the data arrives.
+                const time = new Date().toLocaleTimeString();
+                setTraffic(old => [
+                    ...old,
+                    {
+                        time,
+                        pps: statsResponse.data.avg_packets_per_second || 0,
+                        bps: statsResponse.data.avg_bytes_per_second || 0
                     }
+                ].slice(-TRAFFIC_POINTS));
+
+                // Reactive Alert check: search for new flows in recent history with prediction != "BENIGN"
+                const lastFlowId = lastFlowIdRef.current;
+                if (historyResponse.data.length > 0) {
+                    const latestFlow = historyResponse.data[0];
+                    if (lastFlowId != null && latestFlow.id > lastFlowId) {
+                        const newAttacks = historyResponse.data.filter(
+                            flow => flow.id > lastFlowId && flow.prediction !== "BENIGN"
+                        );
+                        if (newAttacks.length > 0) {
+                            addToast(`SECURITY ALERT: ${newAttacks.length} anomaly vectors detected!`, "error");
+                        }
+                    }
+                    lastFlowIdRef.current = latestFlow.id;
+                } else {
+                    lastFlowIdRef.current = null;
                 }
-                setLastFlowId(latestFlow.id);
-            } else {
-                setLastFlowId(null);
+
+            }
+
+            catch (err) {
+
+                console.error(err);
+
+            }
+
+            // Next poll only once this one has finished. setInterval kept
+            // firing while a slow request was still in flight, so responses
+            // could land out of order and an old one overwrite a newer one.
+            if (!cancelled) {
+                timer = setTimeout(loadData, POLL_MS);
             }
 
         }
 
-        catch (err) {
-
-            console.error(err);
-
-        }
-
-    }
-
-    useEffect(() => {
-
         loadData();
 
-        const timer = setInterval(loadData, 2000);
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
 
-        return () => clearInterval(timer);
-
-    }, [lastFlowId]);
+    }, [addToast]);
 
     return (
 
@@ -81,7 +118,7 @@ export default function LiveDashboard() {
 
             <LiveStats stats={stats} />
 
-            <LiveTrafficChart stats={stats} />
+            <LiveTrafficChart stats={stats} traffic={traffic} />
 
             <LiveHistory history={history} addToast={addToast} />
 

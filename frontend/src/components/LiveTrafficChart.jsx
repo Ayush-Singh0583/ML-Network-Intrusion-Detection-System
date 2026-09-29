@@ -6,12 +6,12 @@ import {
     LineElement,
     BarElement,
     ArcElement,
+    Filler,
     Tooltip,
     Legend
 } from "chart.js";
 
 import { Line, Doughnut, Bar } from "react-chartjs-2";
-import { useEffect, useState } from "react";
 
 ChartJS.register(
     CategoryScale,
@@ -20,52 +20,26 @@ ChartJS.register(
     LineElement,
     BarElement,
     ArcElement,
+    // Needed for `fill: true` on the line datasets. Without it Chart.js
+    // skips the shaded area and warns in the console on every render.
+    Filler,
     Tooltip,
     Legend
 );
 
-export default function LiveTrafficChart({ stats = {} }) {
-
-    const MAX_POINTS = 30;
-
-    const [labels, setLabels] = useState([]);
-    const [ppsData, setPpsData] = useState([]);
-    const [bpsData, setBpsData] = useState([]);
-
-    useEffect(() => {
-
-        const now = new Date().toLocaleTimeString();
-
-        setLabels(old => {
-            const updated = [...old, now];
-            return updated.slice(-MAX_POINTS);
-        });
-
-        setPpsData(old => {
-            const updated = [
-                ...old,
-                stats.avg_packets_per_second || 0
-            ];
-            return updated.slice(-MAX_POINTS);
-        });
-
-        setBpsData(old => {
-            const updated = [
-                ...old,
-                stats.avg_bytes_per_second || 0
-            ];
-            return updated.slice(-MAX_POINTS);
-        });
-
-    }, [stats]);
+// `traffic` is the time series, one { time, pps, bps } point per poll. The
+// dashboard appends to it as each poll lands. It used to be rebuilt here in
+// an effect that watched `stats`, which cost an extra render per poll and
+// added a fake zero point every time the page mounted.
+export default function LiveTrafficChart({ stats = {}, traffic = [] }) {
 
     // Line Chart: Live Traffic
     const trafficData = {
-        labels,
+        labels: traffic.map(p => p.time),
         datasets: [
             {
                 label: "Packets/sec",
-                data: ppsData,
+                data: traffic.map(p => p.pps),
                 borderColor: "#00e676",
                 backgroundColor: "rgba(0, 230, 118, 0.1)",
                 fill: true,
@@ -73,7 +47,7 @@ export default function LiveTrafficChart({ stats = {} }) {
             },
             {
                 label: "Bytes/sec",
-                data: bpsData,
+                data: traffic.map(p => p.bps),
                 borderColor: "#00e5ff",
                 backgroundColor: "rgba(0, 229, 255, 0.1)",
                 fill: true,

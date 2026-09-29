@@ -371,7 +371,6 @@ ML-Network-Intrusion-Detection-System
 │   │
 │   ├── routers
 │   ├── services
-│   ├── trained_models
 │   ├── database.py
 │   └── app.py
 │
@@ -384,7 +383,9 @@ ML-Network-Intrusion-Detection-System
 │   └── package.json
 │
 ├── data
-├── models
+├── saved_models       # trained model bundles (created by src/run.py train)
+├── src                # training / evaluation pipeline
+├── tests
 ├── README.md
 └── requirements.txt
 ```
@@ -474,7 +475,7 @@ These features closely follow the CICIDS2017 feature set.
 ## Clone Repository
 
 ```bash
-git clone https://github.com/<YOUR_USERNAME>/ML-Network-Intrusion-Detection-System.git
+git clone https://github.com/Ayush-Singh0583/ML-Network-Intrusion-Detection-System.git
 
 cd ML-Network-Intrusion-Detection-System
 ```
@@ -489,9 +490,25 @@ python -m venv .venv
 .venv\Scripts\activate
 
 pip install -r requirements.txt
+```
 
+Train the model the API serves. `saved_models/` is not in git, so a fresh
+clone has no model and `/health` reports `degraded` until this has run. It
+needs the eight CIC-IDS2017 CSVs in `data/` (see `data/Readme.md`):
+
+```bash
+python src/run.py cache
+python src/run.py train --model rf --protocol crossday
+```
+
+Start the API:
+
+```bash
 uvicorn backend.app:app --reload
 ```
+
+Live capture needs admin rights (and Npcap on Windows). If it cannot open
+the network interface, **Start Capture** now shows the reason.
 
 Backend runs on
 
@@ -624,7 +641,7 @@ Information Science Engineering Student
 RV Institute of Technology and Management
 
 GitHub:
-https://github.com/<YOUR_USERNAME>
+https://github.com/Ayush-Singh0583
 
 LinkedIn:
 (Add your LinkedIn)

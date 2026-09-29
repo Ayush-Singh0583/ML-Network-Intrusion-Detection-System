@@ -1,30 +1,42 @@
 import { useState, useRef, useEffect } from "react";
 
-function UploadCard({ file, setFile, uploadFile, loading }) {
-    const [dragActive, setDragActive] = useState(false);
-    const [statusText, setStatusText] = useState("Initializing Deep Packet Inspection...");
-    const fileInputRef = useRef(null);
+const SCAN_STAGES = [
+    "Uploading traffic telemetry file...",
+    "Validating network headers...",
+    "Parsing raw packet records...",
+    // No feature count here: the served model uses what its bundle lists
+    // (see the Model panel), not the 78 columns of the raw CSV.
+    "Extracting flow features...",
+    "Running Random Forest classifier...",
+    "Aggregating class prediction counts...",
+    "Generating threat summary vectors..."
+];
 
-    // Rotate telemetry scanning statuses when loading
+// Rotating telemetry scanning statuses. Only mounted while an upload is in
+// flight, so every upload starts again at the first stage without an effect
+// having to reset state (that reset was a synchronous setState in an effect).
+function ScannerOverlay() {
+    const [stage, setStage] = useState(0);
+
     useEffect(() => {
-        if (!loading) return;
-        const stages = [
-            "Uploading traffic telemetry file...",
-            "Validating network headers...",
-            "Parsing raw packet records...",
-            "Extracting 78 telemetry features...",
-            "Running Random Forest classifier...",
-            "Aggregating class prediction counts...",
-            "Generating threat summary vectors..."
-        ];
-        let idx = 0;
-        setStatusText(stages[0]);
         const interval = setInterval(() => {
-            idx = (idx + 1) % stages.length;
-            setStatusText(stages[idx]);
+            setStage(s => (s + 1) % SCAN_STAGES.length);
         }, 1500);
         return () => clearInterval(interval);
-    }, [loading]);
+    }, []);
+
+    return (
+        <div className="scanner-overlay">
+            <div className="scan-line"></div>
+            <div className="cyber-loader"></div>
+            <div className="loader-status-text">{SCAN_STAGES[stage]}</div>
+        </div>
+    );
+}
+
+function UploadCard({ file, setFile, uploadFile, loading }) {
+    const [dragActive, setDragActive] = useState(false);
+    const fileInputRef = useRef(null);
 
     const handleDrag = (e) => {
         e.preventDefault();
@@ -42,7 +54,9 @@ function UploadCard({ file, setFile, uploadFile, loading }) {
         setDragActive(false);
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const droppedFile = e.dataTransfer.files[0];
-            if (droppedFile.name.endsWith(".csv")) {
+            // Case-insensitive, like the file picker's accept=".csv":
+            // "FLOWS.CSV" used to be rejected on drop but accepted via browse.
+            if (droppedFile.name.toLowerCase().endsWith(".csv")) {
                 setFile(droppedFile);
             } else {
                 alert("Only network CSV files are accepted!");
@@ -72,13 +86,7 @@ function UploadCard({ file, setFile, uploadFile, loading }) {
     return (
         <div className="card" style={{ position: "relative" }}>
             {/* Loading Scanner Overlay */}
-            {loading && (
-                <div className="scanner-overlay">
-                    <div className="scan-line"></div>
-                    <div className="cyber-loader"></div>
-                    <div className="loader-status-text">{statusText}</div>
-                </div>
-            )}
+            {loading && <ScannerOverlay />}
 
             <h2>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--neon-cyan)" }}>
