@@ -17,6 +17,17 @@ SET of flows**: one source touching many ports, or many hosts, in a short
 window.  So it is detected by counting, not by classifying, and it runs
 alongside the model rather than inside it.
 
+CORRECTION (2026-10-04).  The two paragraphs above overstate what was measured.
+PortScan occurs only on the test day, so every one of those four models was
+trained WITHOUT a single PortScan flow.  0.09%-0.26% is the detection rate of a
+class the classifier never saw; it does not show that a classifier which had
+seen it would fail, and "structural" is therefore not established.  The 1,958
+unique vectors show that scan flows resemble each other, not that they resemble
+benign flows.  ``src/study.py e2`` measures the seen case.  The text is kept
+because the design argument that follows does not depend on it: a count over a
+source's flows needs no labels and no training data, so it works on a scan
+nobody has seen before -- and that is reason enough for this module.
+
 WHAT IT DETECTS
 ---------------
     vertical    one source  ->  many PORTS on few hosts   (nmap -p-)
@@ -311,6 +322,21 @@ class ScanTracker:
     # -----------------------------------------------------------------
     # READ
     # -----------------------------------------------------------------
+
+    def source_counts(self, src_ip: str) -> Tuple[int, int]:
+        """(distinct ports, distinct hosts) currently in ``src_ip``'s window.
+
+        Read-only, and it does not expire anything: it reports the window as
+        the last ``observe`` for that source left it.  ``(0, 0)`` for a source
+        that is not tracked.  Used by the offline replay to ask "is this source
+        above threshold right now" after each observation, which the alert
+        list alone cannot answer because alerts are rate-limited.
+        """
+        with self._lock:
+            win = self._sources.get(src_ip)
+            if win is None:
+                return (0, 0)
+            return (len(win.ports), len(win.hosts))
 
     def snapshot(self, now: Optional[float] = None) -> Dict[str, object]:
         """Current state, for /live/stats. Takes the lock; never blocks on I/O."""

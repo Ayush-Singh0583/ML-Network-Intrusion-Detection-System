@@ -68,4 +68,5 @@ def remove_identifier_columns(df):
 - [[Feature-Engineering-Timing]] — Behavioral features relied on after port removal.
 - [[Machine-Learning-Models]] — Impact of balanced training across non-shortcut features.
 - [[Model-Evaluation-Metrics]] — Measuring true generalization without port artifacts.
+- [[Three-Layer-Study]] — Where the port is used after all: as a count of distinct ports per source per window, kept in a side-table that can never become a feature.
 - [[Index]] — Master Knowledge Graph Index.

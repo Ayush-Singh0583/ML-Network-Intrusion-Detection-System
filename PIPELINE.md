@@ -14,7 +14,7 @@ pip install -r requirements.txt
 ## Quick start
 
 ```bash
-python src/run.py cache                                   # parse the CSVs once
+python src/run.py cache                                   # parse the CSVs once (--rebuild to start over)
 python src/run.py train --model mlp  --protocol crossday  # open-set protocol
 python src/run.py train --model rf   --protocol closedset # architecture table
 python src/run.py compare --protocol closedset --models rf xgb lgbm mlp cnn lstm
@@ -49,6 +49,94 @@ purist variant.
 de-duplicated, stratified. It is *optimistic* relative to the temporal protocol
 because bursty flows stay temporally adjacent; the run log says so. Report it as
 a model comparison, never as a detection result.
+
+> **Added 2026-10-04.** `build_splits` has three more protocols, used by the
+> study and not exposed through `run.py train`:
+>
+> | protocol | what it is |
+> |---|---|
+> | `random` | all five days pooled, 70/15/15 at random — the leaky baseline, there to be compared against |
+> | `blocked` | per (capture, class), in time order: earliest 60% train, next 20% validation, last 20% test |
+> | `loco` | `blocked` with one attack class (`holdout_class=`) removed from train and validation; all of it goes to test |
+>
+> `crossday` also accepts `val_mode="tail"`: the earlier flows of each Thursday
+> class train and the later ones validate, instead of a random half.
+>
+> In these three and in `crossday`, only the training split is de-duplicated;
+> validation and test are raw flows. `dedup_train=False` skips even that and
+> returns the training days as recorded.
+
+## The study (`src/study.py`)
+
+The experiments behind the paper. One command per research question; each
+writes `runs/<git-sha>-<timestamp>-study-<name>/` with its tables (`*.csv`),
+figures (`*.png`, `*.pdf`), `log.txt`, `config.json` and `results.json`.
+
+```bash
+python src/study.py doctor          # describe the CSVs in data/ -- run first, read it
+python src/study.py e1              # protocol effect: random / blocked / crossday
+python src/study.py e2              # each attack class seen versus held out
+python src/study.py e3              # benign-only detectors, deep and classical
+python src/study.py e4              # the per-source behaviour layer
+python src/study.py e5              # three layers under one false-alarm budget
+python src/study.py e6              # does a threshold survive a new day
+python src/study.py all             # doctor, e1..e6 (one process each), report;
+                                    # stops after doctor if it lists a problem
+python src/study.py all --only e3   # re-run one experiment
+python src/study.py report          # newest full runs that follow the plan -> paper/tables,
+                                    # paper/figures, paper/SOURCES.md
+```
+
+Useful flags (all experiments): `--quick` (subsampled smoke run, never a
+result; plain `report` ignores it, and `all --quick` writes to `paper/quick/`
+only), `--models xgb` (skip the Random Forest), `--seeds N`, `--epochs N`,
+`--device cpu|cuda`, `--n-boot N`.
+
+Requirements and behaviour worth knowing:
+
+- **Data.** E4 and the behaviour layer of E5 need source address and timestamp,
+  which only the `GeneratedLabelledFlows` CSVs carry (`data/Readme.md`). With
+  the other download, `all` skips E4 and E5 fuses two layers.
+- **`all` stops when `doctor` lists a problem** (exit code 2, before the first
+  experiment): a missing capture, a mixture of the two downloads, timestamps
+  that cannot be read (`time=UNREADABLE`), that fall on another date, or that
+  parse outside 08:00-18:00. `--despite-problems` runs anyway, and
+  `paper/SOURCES.md` then repeats the problems next to the tables.
+- **The rule every table follows.** A threshold is fitted on validation benign
+  scores for a false-alarm budget (0.1%, 0.5%, 1%); the table gives the share
+  of each attack class above it on the test split, a block-bootstrap interval,
+  and the false-alarm rate the threshold actually produced on test benign rows.
+- **Nothing is tuned.** XGBoost and Random Forest use `config.XGB_PARAMS` and
+  `config.RF_PARAMS`. The deep models use the `TrainConfig` defaults except
+  that the study caps them at 30 epochs with patience 10 (`study.train_config`).
+  The Isolation Forest settings (`config.IFOREST_PARAMS`) were written with
+  the study and never adjusted. The choices that could otherwise be made after
+  seeing the results are fixed in `paper/PROTOCOL.md`.
+- **Three verdicts are computed.** RQ3, RQ5 and RQ6 have a yes/no rule in the
+  protocol; `src/rules.py` applies it and the experiment writes
+  `e3_rq3_verdict`, `e5_rq5_verdict`, `e6_rq6_verdict`.
+- **Seeds.** E1, E3 and E5 refit every model with seeds 42, 43, 44. E2 and E6
+  use seed 42 only.
+- **Read `n_blocks` before an interval.** It is the number of one-minute blocks
+  a class's flows fall in. Below 20 the interval is printed and not interpreted;
+  with one block it has zero width. Every detection and paired table says so
+  itself in a true/false column, `interval_counts`.
+- **`report` takes, for each experiment, the newest complete run that follows
+  the plan** (by the time stamp in the folder name; the command line's defaults
+  are the plan's values). A newer run with other settings does not replace it
+  and is named as passed over; if no run follows the plan the newest is taken
+  and named "not run as planned", with the settings that differ. For an
+  experiment it has a run for, it replaces the files its previous report wrote
+  into `paper/tables` and `paper/figures`. For one whose run folder is gone it
+  keeps them and lists them as kept. A file it did not write is never deleted
+  and is named at the end of `paper/SOURCES.md`, which lists every file with
+  the run it came from and repeats what `doctor` said about the CSVs.
+- **Paths can be redirected** with `NIDS_DATA_DIR`, `NIDS_CACHE_DIR`,
+  `NIDS_RUNS_DIR`, `NIDS_ARTIFACT_DIR`, `NIDS_PAPER_DIR`. The tests use this to
+  run the whole study on synthetic captures in a temporary folder.
+  `tests/conftest.py` points all five at empty temporary folders before any
+  test imports the code, so no test reads the CSVs in `data/` or writes into
+  `cache/`, `runs/` or `paper/`, whatever those hold.
 
 ## What each run reports
 
@@ -123,8 +211,26 @@ src/
   run.py            the CLI
   tune.py           hyper-parameter search on f1_macro
   predict.py        inference against a saved bundle
+  study.py          the paper's experiments: doctor, e1..e6, all, report
+  meta.py           identifier side-table (address, port, timestamp) kept out of the features
+  layers.py         classifier / novelty / behaviour, each reduced to "a score per flow"
+  behaviour.py      per-source window counts; replay through the live ScanTracker
+  fusion.py         min-p and Bonferroni fusion; which layer caught what
+  stats.py          budget thresholds, block bootstrap, detection and AUC tables
+  rules.py          the yes/no rules of paper/PROTOCOL.md (RQ3, RQ5, RQ6) as code
+  figures.py        the paper's figures
 tests/
-  test_pipeline.py  31 regression tests, one per fixed bug
+  test_pipeline.py        31 regression tests, one per fixed bug
+  test_meta.py            timestamps, side-table, cache rebuild, split protocols
+  test_behaviour_layer.py window counts, direction repair, replay
+  test_stats_fusion.py    thresholds, bootstrap, fusion, split-editing helpers, report
+  test_rules.py           the decision rules, on hand-built tables
+  test_study_cli.py       the whole study end to end on synthetic captures
+  synth_cic.py            writes CIC-IDS2017-shaped CSVs for the tests (not data)
+paper/
+  PROTOCOL.md       the analysis plan, fixed before the runs
+CLAUDE.md           knowledge-base rules; its last section is the Decision Log
+                    (each decision taken since 2026-10-04, with the reason)
 ```
 
 The old entry points (`main*.py`, `train_svdd.py`, `compare_models.py`,

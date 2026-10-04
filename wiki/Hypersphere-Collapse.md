@@ -109,4 +109,5 @@ if val_std < collapse_tol:            # 1e-4
 - [[Open-Set-Recognition]] — The problem this detector exists to solve.
 - [[Training-Protocol]] — Seeding, checkpoint selection, and why early stopping is disabled here.
 - [[Machine-Learning-Models]] — The wider model portfolio.
+- [[Three-Layer-Study]] — Uses Deep SVDD, with these guards, as one of the benign-only detectors it compares.
 - [[Index]] — Master Knowledge Graph Index.

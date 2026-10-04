@@ -9,7 +9,7 @@ code_refs:
   - "src/engine.py"
   - "src/seeding.py"
 status: current
-updated: 2026-08-26
+updated: 2026-10-04
 tags: ["protocol", "train-val-test", "reproducibility", "early-stopping", "seeding", "amp"]
 ---
 
@@ -21,6 +21,25 @@ The primary protocol is temporal: train on Monday–Wednesday plus half of Thurs
 ---
 
 ## 🧠 The two protocols
+
+> **⚠️ CORRECTION (2026-10-04)** — This section described *two* protocols as if they were
+> all of them. `build_splits` now has five. `random`, `blocked` and `loco` were added for
+> the study in [[Three-Layer-Study]], and `crossday` takes `val_mode="tail"` (Thursday split
+> in time instead of at random). What is written below about `crossday` and `closedset`
+> still holds; it is incomplete, not wrong.
+>
+> | protocol | train / validation / test | exists to measure |
+> | :--- | :--- | :--- |
+> | `random` | all five days pooled, 70 / 15 / 15 at random | how much the leak is worth (never a detection result) |
+> | `blocked` | per (capture, class), in time order: earliest 60% / next 20% / last 20% | every class seen; no class's test flows precede its training flows |
+> | `loco` | `blocked` with one attack class removed from train and validation, all of it in test | that class when it is unseen |
+>
+> De-duplication is training-split only in `random`, `blocked`, `loco` and `crossday`:
+> validation and test are raw flows in all four, so their per-class rates are the same
+> quantity. Only `closedset` de-duplicates its pool before splitting.
+> `dedup_train=False` returns the training days as recorded.
+> The original text is retained below because the reasoning about Thursday is still the
+> reason `crossday` looks the way it does.
 
 ### `crossday` — the real result
 
@@ -96,4 +115,5 @@ Deep SVDD. The only unsupervised signal is validation distance, and a smaller di
 - [[Hypersphere-Collapse]] — The one model where early stopping is disabled.
 - [[Rejection-Scoring]] — What the validation day is used to calibrate.
 - [[Machine-Learning-Models]] — Estimator settings and artifact bundles.
+- [[Three-Layer-Study]] — The study that added `random`, `blocked`, `loco` and time-ordered validation.
 - [[Index]] — Master Knowledge Graph Index.

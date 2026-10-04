@@ -89,4 +89,5 @@ Verified byte-identical over 400,000 rows of the project's own preprocessed data
 - [[Dataset-CICIDS2017]] — Attack distribution and per-day composition.
 - [[Shortcut-Learning-Port-Bias]] — The label-leakage vector that *was* handled correctly.
 - [[Metric-Dilution-Traps]] — Why the honest post-fix numbers look worse.
+- [[Three-Layer-Study]] — Re-measures the random-versus-day gap per attack class, with a time-blocked split in between (experiment E1).
 - [[Index]] — Master Knowledge Graph Index.

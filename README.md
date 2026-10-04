@@ -24,6 +24,64 @@ Unlike traditional offline IDS implementations, this project performs **live pac
 
 ---
 
+# 🧪 The Study Behind the Paper
+
+> **Status (2026-10-04): code written and tested on synthetic data. Not yet run
+> on the real dataset.** No number in this README comes from it.
+
+`src/study.py` measures **which layer of a three-layer detector catches which
+attack class, at one shared false-alarm budget, on a day the system has not
+seen**. The layers are the per-flow classifier, a model that has seen benign
+traffic only, and the per-source scan counter described under Scan Detection.
+
+| | question | command |
+|---|---|---|
+| E1 | What is a random split worth, compared with a time-blocked and a cross-day one? | `python src/study.py e1` |
+| E2 | Is a missed class undetectable, or just unseen? | `python src/study.py e2` |
+| E3 | Does a deep benign-only model beat simple ones on unseen classes? | `python src/study.py e3` |
+| E4 | What does the scan counter cover, and what does it cost in alerts? | `python src/study.py e4` |
+| E5 | Do three layers beat the best single one at the same total budget, and which layer caught what? | `python src/study.py e5` |
+| E6 | Does a threshold fitted before the test day hold on it? | `python src/study.py e6` |
+
+```bash
+python src/study.py doctor        # what the CSVs in data/ actually contain -- read it first
+python src/study.py all --quick   # smoke run on a training subsample: proves it runs, is not a result
+                                  # (not quick on the real files: E1 alone took ten minutes; --seeds 1 shortens it)
+python src/study.py all           # the real thing; each experiment in its own process
+python src/study.py report        # copies tables and figures into paper/
+```
+
+`all` runs `doctor` first and stops there if it lists a problem with the CSVs
+(a missing file, a mixture of the two downloads, timestamps it cannot read).
+`all --quick` collects its tables into `paper/quick/`, never into
+`paper/tables` or `paper/figures`.
+
+`report` works experiment by experiment. Where it has a run, it replaces the
+files its previous report wrote for that experiment; where the run folder is
+gone, it keeps them and says so; a file it did not write is never deleted, and
+is named as not covered. For each experiment it takes the newest run that
+follows the plan (the command line's defaults are the plan's values) and names
+a run with other settings "not run as planned". `paper/SOURCES.md` lists every
+file with the run it came from, and repeats what `doctor` said about the CSVs.
+
+Three of the six questions have a yes/no rule (E3, E5, E6). The rule is code
+(`src/rules.py`), not a judgement made on a table afterwards: each of those
+experiments writes its own verdict table (`e3_rq3_verdict`, `e5_rq5_verdict`,
+`e6_rq6_verdict`), one row per case and one column per condition. A detection
+gain counts only on a class that spans at least 20 one-minute blocks, and only
+if it is not bought with false alarms; a table with a comparison missing never
+passes.
+
+It needs the `GeneratedLabelledFlows` CSVs, not the `MachineLearningCSV` ones
+(see `data/Readme.md`). The analysis plan for the six experiments lives in
+`paper/PROTOCOL.md`. It was written after the XGBoost run reported below and
+before any of the six experiments; commit it before running them. The design
+is described in `wiki/Three-Layer-Study.md`. **Why** each choice was made (the
+budgets, the threshold rule, the split protocols, the fusion rule and so on) is
+in the Decision Log, the last section of `CLAUDE.md`.
+
+---
+
 # 📊 Measured Results
 
 **Protocol.** Train on Monday–Wednesday plus half of Thursday, validate on the
@@ -67,6 +125,42 @@ Reproduce with `python src/run.py train --model xgb --protocol crossday`; the
 table is written to `runs/<sha>-<timestamp>/detection_by_class.csv`.
 
 ### Random Forest, and what the comparison actually shows
+
+> **⚠️ CORRECTION (2026-10-04)** — two things in this section.
+>
+> **1. The calibration advice at the end is asserted, not measured, and its
+> reasoning is wrong.** It says that wrapping XGBoost in
+> `CalibratedClassifierCV(method="isotonic", cv="prefit")` "costs nothing and
+> buys the same threshold reliability". Nobody ran it. And "uncalibrated
+> probabilities" is not what makes a threshold drift:
+>
+> - The threshold is a quantile of the validation day's benign scores. Re-map
+>   the *score* with any strictly increasing function and every score moves
+>   together with the quantile: exactly the same flows end up above the
+>   threshold. A map with flat steps (isotonic regression has them) can only
+>   stop flows firing, false alarms and detections alike — it is a stricter
+>   threshold under another name.
+> - `CalibratedClassifierCV` on a multi-class model is not such a map. It
+>   recalibrates each class separately and renormalises, which can reorder
+>   flows by their largest attack probability. So the argument above does not
+>   rule it out; it simply has never been tested. Experiment E6 of
+>   `src/study.py` now tests it: same model, same reference flows, with and
+>   without per-class isotonic recalibration (`e6_calibration_effect`).
+> - What the 23× in this section shows is the benign score distribution itself
+>   moving between the validation day and the test day. E6 also measures
+>   whether drawing the validation flows differently (later part of Thursday;
+>   leave-one-day-out) narrows the gap.
+>
+> **2. The Random Forest numbers have no results file.**
+> `runs/f853071-20260911-215307-rf-crossday/` holds only `config.json`, and
+> there is no run directory for the 25-tree forest mentioned below. Treat every
+> Random Forest figure in this README as unverified until E1 and E6 re-measure
+> it. The XGBoost table above is backed by
+> `runs/f853071-20260912-034653-xgb-crossday/`.
+>
+> The original text is retained below because the observation it starts from —
+> a budget that lands far from where it was aimed — is real and is the reason
+> E6 exists.
 
 The same protocol, a full Random Forest (300 trees, depth 24,
 `class_weight="balanced_subsample"`):
@@ -145,6 +239,10 @@ deployable as-is.
 
 # 🔎 Scan Detection
 
+> **⚠️ CORRECTION (2026-10-04)** — "no amount of model capacity changes that"
+> is not supported by the runs behind it; see the correction at the top of
+> Known Limitations. The 0.23% is a measurement of a class the model never saw.
+
 The flow classifier detects **0.23%** of port scans, and no amount of model
 capacity changes that — see Known Limitations. Scanning is a property of a
 *set* of flows, so it is detected by counting rather than by classifying, in a
@@ -197,6 +295,39 @@ matching test fails.
 
 # ⚠️ Known Limitations
 
+> **⚠️ CORRECTION (2026-10-04)** — this section says port scans are "not
+> detectable from a single flow, by construction", that this is "not fixable by
+> training", that "the signal is not in the data", and that botnet beaconing
+> "has no per-flow signature either". The experiments listed do not show any of
+> that.
+>
+> `PortScan` and `Bot` occur only on Friday, the test day. Every model named
+> below — both Random Forests, XGBoost, at every threshold — was trained without
+> one flow of either class. Those runs show that a class the classifier has
+> **never seen** is not detected. They cannot show that it is undetectable,
+> because a model that had seen it was never tried.
+>
+> The count below (158,930 scan flows, 1,958 distinct feature vectors) shows
+> that scan flows look like *each other*. Whether they can be detected depends
+> on whether they look like *benign* flows, which that count does not measure.
+> For what it is worth, Engelen et al. (2021, Table II) report Random Forest
+> precision and recall of 0.99 on PortScan under a random 75/25 split — with
+> their feature set, not this one, so it is a reason for doubt, not a
+> refutation.
+>
+> Experiment E2 of `src/study.py` tests it on this data: detection of each
+> class when it is in training and when it is held out, the share of its flows
+> whose exact feature vector also occurs under the BENIGN label, and how many
+> benign flows carry those vectors. Until E2 has run, read the sentences below
+> as **"not detected when unseen"**.
+>
+> The case for the scan counter does not depend on the old claim. A count over
+> a source's flows needs no labels and no training data, so it works on an
+> attack nobody has seen before — which is the property worth measuring, and E4
+> and E5 measure it.
+>
+> The original text is retained below.
+
 **Port scans are not detectable from a single flow, by construction.** A port
 scan is the same flow repeated against different ports: identical duration,
 packet counts, lengths and flags. Measured on the raw capture — 158,930
@@ -222,6 +353,13 @@ The signal is not in the data.
 shortcut learning (port 21 → FTP-Patator). This is why scan flows become
 indistinguishable. The port belongs in the *detection logic* as an aggregate,
 never as a per-flow feature.
+
+> **⚠️ CORRECTION (2026-10-04)** — "because the model's probabilities are
+> uncalibrated" and "calibrate before trusting an operating point" in the next
+> paragraph: the 4.38% is measured; the explanation is not established and the
+> remedy was never run. See the correction under *Random Forest, and what the
+> comparison actually shows*. The Random Forest comparison in the same paragraph
+> has no results file either.
 
 **Thresholds calibrated on XGBoost do not transfer across days.** A 1% benign
 false-alarm budget lands at 4.38% on the test day, because the model's
@@ -383,8 +521,9 @@ ML-Network-Intrusion-Detection-System
 │   └── package.json
 │
 ├── data
+├── paper              # study protocol; tables and figures written by src/study.py report
 ├── saved_models       # trained model bundles (created by src/run.py train)
-├── src                # training / evaluation pipeline
+├── src                # training / evaluation pipeline, and the study (src/study.py)
 ├── tests
 ├── README.md
 └── requirements.txt
@@ -497,7 +636,7 @@ clone has no model and `/health` reports `degraded` until this has run. It
 needs the eight CIC-IDS2017 CSVs in `data/` (see `data/Readme.md`):
 
 ```bash
-python src/run.py cache
+python src/run.py cache          # add --rebuild to discard an existing cache
 python src/run.py train --model rf --protocol crossday
 ```
 

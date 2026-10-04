@@ -8,7 +8,7 @@ code_refs:
   - "src/run.py"
   - "src/config.py"
 status: current
-updated: 2026-08-26
+updated: 2026-10-04
 tags: ["open-set", "ood-detection", "mahalanobis", "energy-score", "auroc", "near-ood"]
 ---
 
@@ -76,6 +76,13 @@ def threshold_at_fpr(scores_val_negative, target_fpr=0.05):
     return float(np.quantile(scores_val_negative, 1.0 - target_fpr))
 ```
 
+> **Note (2026-10-04).** `np.quantile` interpolates, so this threshold can leave one
+> validation flow more than the target above it. `run.py` still uses it. The study uses
+> `stats.budget_threshold`, an order statistic that never exceeds the budget on the sample
+> it was fitted on — it matters there because the fusion rule splits one budget between
+> layers. A study table and a `run.py` table can therefore differ by one validation flow
+> per threshold. See [[Three-Layer-Study]].
+
 ### Reporting
 
 Unknown-rate alone is maximised by rejecting everything. The metrics that mean something:
@@ -102,4 +109,5 @@ Unknown-rate alone is maximised by rejecting everything. The metrics that mean s
 - [[Metric-Dilution-Traps]] — How the reported AUROC and macro-F1 were misread.
 - [[Training-Protocol]] — Where the validation day that calibrates τ comes from.
 - [[Dataset-CICIDS2017]] — Why Friday's DDoS is near-OOD rather than far-OOD.
+- [[Three-Layer-Study]] — Scores the benign-only detectors per attack class at fixed false-alarm budgets, beside classical baselines (experiment E3).
 - [[Index]] — Master Knowledge Graph Index.

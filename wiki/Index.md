@@ -6,7 +6,7 @@ sources:
   - "raw/PROJECT_DOCUMENTATION.md"
   - "raw/CODE_REVIEW_2026-08-26.md"
 status: current
-updated: 2026-08-26
+updated: 2026-10-04
 tags: ["index", "navigation", "knowledge-graph"]
 ---
 
@@ -15,6 +15,8 @@ tags: ["index", "navigation", "knowledge-graph"]
 Welcome to the central knowledge repository for the **ML-NIDS** project. This graph connects the end-to-end engineering architecture, machine learning models, statistical feature engineering, security audit refactors, and dataset behaviors.
 
 > **Reading order for someone new:** [[System-Architecture]] → [[Dataset-CICIDS2017]] → [[Data-Leakage-Audit]] → [[Training-Protocol]] → [[Rejection-Scoring]]. The last three carry the results that invalidate parts of the earlier pages.
+>
+> **Why was it done this way?** Each decision taken since 2026-10-04, with its reason, is in the **Decision Log** — the last section of `CLAUDE.md` in the repository root (rows `D-01` onwards). Earlier decisions are in `learnings.md` and on the pages below.
 
 ---
 
@@ -37,6 +39,7 @@ Welcome to the central knowledge repository for the **ML-NIDS** project. This gr
 - [[Hypersphere-Collapse]] — How Deep SVDD collapses to a constant function, how to read it out of a checkpoint, and the three guards that prevent it.
 
 ### 🛡️ Open-Set & Evaluation
+- [[Three-Layer-Study]] — The experiments behind the paper: classifier + benign-only novelty model + per-source behaviour layer, scored per attack class at one false-alarm budget. **Code written and tested; not yet run on the real data.**
 - [[Rejection-Scoring]] — Novelty scores compared under near- and far-OOD, threshold calibration, and why AUROC came out **below** 0.5. Supersedes the method in [[Open-Set-Recognition]].
 - [[Open-Set-Recognition]] — The original confidence-thresholding approach. ⚠️ *superseded — retained for the refuted mechanism and the SOC rationale.*
 - [[Metric-Dilution-Traps]] — Three failures that were arithmetic rather than model collapse, including the one that inverted checkpoint selection.
@@ -76,6 +79,7 @@ graph LR
 
 | Page | Status | Note |
 | :--- | :--- | :--- |
+| [[Three-Layer-Study]] | current | Describes code; holds no results yet |
 | [[Data-Leakage-Audit]] | current | |
 | [[Training-Protocol]] | current | |
 | [[Rejection-Scoring]] | current | |
@@ -98,4 +102,5 @@ Staleness is tracked via the `code_refs` frontmatter field — see the schema in
 - **Schema & Conventions**: [[CLAUDE.md|Knowledge Base Schema]]
 - **Operational Learnings & Pitfalls**: [[learnings.md|Session Learnings & Gotchas]]
 - **Pipeline usage**: `PIPELINE.md`
+- **Study protocol (fixed before the runs)**: `paper/PROTOCOL.md`
 - **Check what needs ingesting**: `python scripts/process_raw_hook.py --report`

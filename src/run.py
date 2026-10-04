@@ -11,7 +11,7 @@ which artifact.
 
 Usage
 -----
-    python src/run.py cache
+    python src/run.py cache                 # resumes; --rebuild starts over
     python src/run.py train --model mlp  --protocol crossday
     python src/run.py train --model cnn  --protocol closedset --epochs 40
     python src/run.py train --model deep_svdd --pretrain-ae
@@ -538,7 +538,10 @@ def cfg_from_args(args) -> TrainConfig:
 
 
 def cmd_cache(args) -> int:
-    build_cache(out_path=CLEAN_PARQUET)
+    # --rebuild discards the parts on disk and parses every CSV again.  Without
+    # it the build resumes, and still starts over by itself when the cache
+    # layout is outdated or a CSV has been replaced since it was parsed.
+    build_cache(out_path=CLEAN_PARQUET, resume=not getattr(args, "rebuild", False))
     return 0
 
 
@@ -616,7 +619,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="ML-NIDS pipeline")
     sub = p.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("cache", help="parse raw CSVs once into a float32 Parquet cache")
+    k = sub.add_parser("cache", help="parse raw CSVs once into a float32 Parquet cache")
+    k.add_argument("--rebuild", action="store_true",
+                   help="discard the existing cache and parse every CSV again")
 
     t = sub.add_parser("train", help="train and evaluate one model")
     t.add_argument("--model", required=True,

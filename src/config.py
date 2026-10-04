@@ -19,10 +19,14 @@ from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-DATA_DIR = PROJECT_ROOT / "data"
-CACHE_DIR = PROJECT_ROOT / "cache"
-RUNS_DIR = PROJECT_ROOT / "runs"
-ARTIFACT_DIR = PROJECT_ROOT / "saved_models"
+# Each location can be redirected with an environment variable.  The tests use
+# this to run the whole study against synthetic captures in a temporary
+# directory, so that a test run can never read, or overwrite, a real cache or
+# a real result.
+DATA_DIR = Path(os.environ.get("NIDS_DATA_DIR", PROJECT_ROOT / "data"))
+CACHE_DIR = Path(os.environ.get("NIDS_CACHE_DIR", PROJECT_ROOT / "cache"))
+RUNS_DIR = Path(os.environ.get("NIDS_RUNS_DIR", PROJECT_ROOT / "runs"))
+ARTIFACT_DIR = Path(os.environ.get("NIDS_ARTIFACT_DIR", PROJECT_ROOT / "saved_models"))
 
 for _d in (CACHE_DIR, RUNS_DIR, ARTIFACT_DIR):
     _d.mkdir(parents=True, exist_ok=True)
@@ -139,6 +143,60 @@ DUPLICATE_FEATURES = [
     "Avg Fwd Segment Size",
     "Avg Bwd Segment Size",
 ]
+
+# =====================================================================
+# META COLUMNS  (carried beside the features, NEVER used as features)
+# ---------------------------------------------------------------------
+# The identifiers above are dropped from the feature set, and that stays
+# true.  But two things in the study need them as *side information*:
+#
+#   * time ordering   -- a time-blocked split needs to know which flow came
+#                        first; a row index is only a proxy for that
+#   * the behaviour layer -- "one source touched 900 ports in a minute" is a
+#                        statement about source IP, destination port and
+#                        time, none of which may be a per-flow feature
+#
+# So ``build_cache`` copies them into columns with the ``meta__`` prefix
+# before the identifiers are dropped.  Every place that builds a feature
+# matrix goes through ``meta.feature_columns``, which excludes the prefix,
+# and ``tests/test_meta.py`` asserts that no ``meta__`` column can reach a
+# model.
+#
+# The MachineLearningCSV distribution of CIC-IDS2017 ships no source IP and
+# no timestamp.  In that case the columns exist and are null, the pipeline
+# still runs, and the behaviour layer refuses to start with a message that
+# says which download carries them (GeneratedLabelledFlows.zip).
+# =====================================================================
+
+META_PREFIX = "meta__"
+META_SRC_IP = "meta__src_ip"
+META_DST_IP = "meta__dst_ip"
+META_SRC_PORT = "meta__src_port"
+META_DST_PORT = "meta__dst_port"
+META_PROTO = "meta__proto"
+META_TS = "meta__ts"            # seconds since the Unix epoch, capture-local clock
+META_ROW = "meta__row"          # row index inside the capture file
+META_CAPTURE = "meta__capture"  # index of the capture in manifest order
+
+META_COLUMNS = [
+    META_SRC_IP, META_DST_IP, META_SRC_PORT, META_DST_PORT,
+    META_PROTO, META_TS, META_ROW, META_CAPTURE,
+]
+
+# raw header (after .str.strip()) -> meta column.  Both CICFlowMeter naming
+# generations are listed, as in IDENTIFIER_COLUMNS.
+RAW_META_ALIASES: Dict[str, List[str]] = {
+    META_SRC_IP: ["Source IP", "Src IP"],
+    META_DST_IP: ["Destination IP", "Dst IP"],
+    META_SRC_PORT: ["Source Port", "Src Port"],
+    META_DST_PORT: ["Destination Port", "Dst Port"],
+    META_PROTO: ["Protocol"],
+    META_TS: ["Timestamp"],
+}
+
+# Bump when the cache layout changes, so an old cache is rebuilt rather than
+# silently read without the columns the new code expects.
+CACHE_VERSION = 2
 
 BENIGN_LABEL = "BENIGN"
 UNKNOWN_LABEL = "Unknown_Attack"
@@ -283,6 +341,61 @@ LGBM_PARAMS = dict(
     force_col_wise=True,
     verbose=-1,
     n_jobs=-1,
+)
+
+
+# =====================================================================
+# STUDY CONFIG  (src/study.py -- the experiments behind the paper)
+# =====================================================================
+
+# Benign false-alarm budgets every detector is compared at.  Thresholds are
+# fitted on validation benign scores only; the rate observed on the test split
+# is reported next to the target because the two differ.
+STUDY_BUDGETS = (0.001, 0.005, 0.01)
+
+# Time-blocked split: per (capture, class), earliest 60% of flows -> train,
+# next 20% -> validation, last 20% -> test.
+BLOCKED_FRACS = (0.6, 0.2, 0.2)
+
+# Behaviour layer.  Same defaults as the live scan tracker, so the offline
+# measurement describes the component that actually runs.  These are COPIES of
+# backend/live/scan_tracker.py's WINDOW_SECONDS, VERTICAL_PORT_THRESHOLD and
+# HORIZONTAL_HOST_THRESHOLD (src/ must not import the backend to read three
+# numbers); tests/test_behaviour_layer.py fails if the two ever differ.
+BEHAVIOUR_WINDOW_SECONDS = 60.0
+BEHAVIOUR_PORT_THRESHOLD = 100
+BEHAVIOUR_HOST_THRESHOLD = 50
+
+# Ports below this are treated as service ports when repairing flow direction
+# (see behaviour.canonical_endpoints).
+SERVICE_PORT_MAX = 1024
+
+# The dataset was captured 09:00-17:00 local time and its CSVs print a 12-hour
+# clock with no AM/PM marker.  An hour below this value is read as afternoon.
+TIMESTAMP_PM_BELOW_HOUR = 8
+
+# A capture (or a split) "has identifiers" when at least this share of its rows
+# carries a source IP and a timestamp that parses.  A round number, not a
+# derived one: it lets a handful of broken rows through and nothing more.
+# One constant so that `doctor`, the cache, the time-ordered splits and the
+# bootstrap blocks all ask the same question (they used to carry four copies
+# of the literal).
+IDENTIFIER_COVERAGE = 0.99
+
+# Block bootstrap: flows inside one burst are not independent, so confidence
+# intervals resample time blocks, not single flows.
+BOOTSTRAP_BLOCK_SECONDS = 60.0
+BOOTSTRAP_BLOCK_ROWS = 2000      # fallback when a split has no timestamps
+BOOTSTRAP_REPLICATES = 1000
+
+# Isolation Forest baseline of the novelty experiment.  Written with the study
+# and never adjusted: nothing in the study is tuned (paper/PROTOCOL.md).
+IFOREST_PARAMS = dict(
+    n_estimators=200,
+    max_samples=4096,
+    contamination="auto",
+    n_jobs=-1,
+    random_state=SEED,
 )
 
 
